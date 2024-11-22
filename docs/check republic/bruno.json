@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "check republic",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
