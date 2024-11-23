@@ -5,7 +5,19 @@ meta {
 }
 
 get {
-  url: http://localhost:3000/api/offers/all
+  url: http://localhost:3000/api/offers?regionID=20&timeRangeStart=1732104000000&timeRangeEnd=1732449600000&numberDays=1&sortOrder=price-asc&page=1&pageSize=5&priceRangeWidth=100&minFreeKilometerWidth=10
   body: none
   auth: none
+}
+
+params:query {
+  regionID: 20
+  timeRangeStart: 1732104000000
+  timeRangeEnd: 1732449600000
+  numberDays: 1
+  sortOrder: price-asc
+  page: 1
+  pageSize: 5
+  priceRangeWidth: 100
+  minFreeKilometerWidth: 10
 }
