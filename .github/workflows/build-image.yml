@@ -45,7 +45,7 @@ jobs:
       - name: Build and push Docker Image
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           push: true
@@ -65,7 +65,21 @@ jobs:
           proxy_username: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
           proxy_key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
           script: |
-            export CR_PAT=${{ vars.PULL_ACCESS_TOKEN }}
+            export CR_PAT=${{ secrets.PULL_ACCESS_TOKEN }}
             echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
-            docker pull ${{ needs.build.outputs.tags }}
-            docker run -d ${{ needs.build.outputs.tags }}
+
+            # Stop and remove the previous container if it exists
+            CONTAINER_NAME="check_republic"
+            if [ $(docker ps -q -f name=$CONTAINER_NAME) ]; then
+              echo "Stopping and removing the existing container..."
+              docker stop $CONTAINER_NAME
+              docker rm $CONTAINER_NAME
+            fi
+
+            TAG=$(echo "${{ needs.build.outputs.tags }}" | cut -d ',' -f 1)
+
+            echo "Pulling the latest image..."
+            docker pull $TAG
+            
+            echo "Starting a new container..."
+            docker run -d --name $CONTAINER_NAME -p 80:80 $TAG
