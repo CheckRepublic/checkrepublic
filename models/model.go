@@ -91,24 +91,13 @@ func (offers *Offers) FilterByPrice(minPrice *uint64, maxPrice *uint64) (ret *Of
 		return offers
 	}
 
-	if minPrice != nil {
-		for _, offer := range offers.Offers {
-			if offer.Price >= *minPrice {
-				ret.Offers = append(ret.Offers, offer)
-			}
-		}
-	}
+	for _, offer := range offers.Offers {
+		isOkay := true
+		isOkay = isOkay && (minPrice == nil || offer.Price >= *minPrice)
+		isOkay = isOkay && (maxPrice == nil || offer.Price < *maxPrice)
 
-	if maxPrice != nil {
-		if minPrice != nil {
-			offers.Offers = ret.Offers
-			ret = &Offers{}
-		}
-
-		for _, offer := range offers.Offers {
-			if offer.Price < *maxPrice {
-				ret.Offers = append(ret.Offers, offer)
-			}
+		if isOkay {
+			ret.Offers = append(ret.Offers, offer)
 		}
 	}
 
@@ -134,7 +123,7 @@ func (offers *Offers) FilterByCarType(carType *string) (ret *Offers) {
 func (offers *Offers) FilterByVollkasko(vollKasko *bool) (ret *Offers) {
 	ret = &Offers{}
 
-	if vollKasko == nil {
+	if vollKasko == nil || *vollKasko == false {
 		return offers
 	}
 
