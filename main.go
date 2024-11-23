@@ -18,7 +18,7 @@ func main() {
 	models.InitRegions()
 
 	// db.InitPostgres()
-	db.InitElasticSearch()
+	db.InitMemoryDB()
 
 	app := fiber.New()
 
@@ -94,13 +94,13 @@ func getHandler(c *fiber.Ctx) error {
 	if priceRangeWidthParam == "" {
 		return c.Status(fiber.StatusBadRequest).SendString("priceRangeWidth is required")
 	}
-	priceRangeWidth, _ := strconv.ParseUint(priceRangeWidthParam, 10, 64)
+	priceRangeWidth, _ := strconv.ParseUint(priceRangeWidthParam, 10, 32)
 
 	minFreeKilometerWidthParam := c.Query("minFreeKilometerWidth")
 	if minFreeKilometerWidthParam == "" {
 		return c.Status(fiber.StatusBadRequest).SendString("minFreeKilometerWidth is required")
 	}
-	minFreeKilometerWidth, _ := strconv.ParseUint(minFreeKilometerWidthParam, 10, 64)
+	minFreeKilometerWidth, _ := strconv.ParseUint(minFreeKilometerWidthParam, 10, 32)
 
 	minNumberSeatsParam := c.Query("minNumberSeats")
 	var minNumberSeats *uint64
@@ -163,8 +163,8 @@ func getHandler(c *fiber.Ctx) error {
 		sortOrderParam,
 		page,
 		pageSize,
-		priceRangeWidth,
-		minFreeKilometerWidth,
+		uint32(priceRangeWidth),
+		uint32(minFreeKilometerWidth),
 		minNumberSeats,
 		minPrice,
 		maxPrice,
