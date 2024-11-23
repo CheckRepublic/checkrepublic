@@ -12,7 +12,8 @@ jobs:
     name: Deploy Docker Image
     runs-on: ubuntu-latest
     steps:
-      - name: SSH to VM and Execute Docker
+      - uses: actions/checkout@v4
+      - name: Docker login
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ vars.VM_HOST }}
@@ -25,17 +26,51 @@ jobs:
             export CR_PAT=${{ secrets.PULL_ACCESS_TOKEN }}
             echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
 
-            # Stop and remove the previous container if it exists
-            CONTAINER_NAME="check_republic"
-            if [ $(docker ps -q -f name=$CONTAINER_NAME) ]; then
-              echo "Stopping and removing the existing container..."
-              docker stop $CONTAINER_NAME
-              docker rm $CONTAINER_NAME
-            fi
+      - name: Stop docker containers
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ vars.VM_HOST }}
+          username: ${{ vars.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          proxy_host: ${{ vars.DEPLOYMENT_GATEWAY_HOST }}
+          proxy_username: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
+          proxy_key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            docker compose down || true
 
-            TAG="ghcr.io/checkrepublic/checkrepublic:${{ inputs.version }}"
-            echo "Pulling the latest image..."
-            docker pull $TAG
-            
-            echo "Starting a new container..."
-            docker run -d --name $CONTAINER_NAME -p 80:80 $TAG
+      - name: create env file
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ vars.VM_HOST }}
+          username: ${{ vars.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          proxy_host: ${{ vars.DEPLOYMENT_GATEWAY_HOST }}
+          proxy_username: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
+          proxy_key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            echo "TAG=${{ inputs.version }}" > ~/.env
+
+      - name: Copy docker compose file to host 
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ vars.VM_HOST }}
+          username: ${{ vars.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          proxy_host: ${{ vars.DEPLOYMENT_GATEWAY_HOST }}
+          proxy_username: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
+          proxy_key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          source: docker-compose.yml
+          target: ~/
+
+      - name: start docker containers
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ vars.VM_HOST }}
+          username: ${{ vars.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          proxy_host: ${{ vars.DEPLOYMENT_GATEWAY_HOST }}
+          proxy_username: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
+          proxy_key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            docker compose pull 
+            docker compose up -d

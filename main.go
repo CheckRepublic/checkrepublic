@@ -20,14 +20,15 @@ func main() {
 	app := fiber.New()
 
 	app.Get("/api/offers", getHandler)
+	app.Get("/api/offers/all", getAllHandler)
 	app.Post("/api/offers", postHandler)
 	app.Delete("/api/offers", deleteHandler)
 
 	log.Fatal(app.Listen(":3000"))
 }
 
-func helloHandler(c *fiber.Ctx) error {
-	return c.SendString("Hello, World!")
+func getAllHandler(c *fiber.Ctx) error {
+	return c.JSON(db.DB.GetAllOffers(c.Context()))
 }
 
 func postHandler(c *fiber.Ctx) error {

@@ -10,25 +10,20 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
-
-  # go-api:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: go-api
-  #   environment:
-  #     - ELASTICSEARCH_HOST=http://elasticsearch:9200
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     - elasticsearch
-  #   volumes:
-  #     - ./app:/app
-  #   working_dir: /app
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 1g # Limit memory usage
-  #         cpus: "0.5" # Allocate 0.5 CPU core to API
-  #     restart_policy:
-  #       condition: on-failure
+    networks:
+      - net
+  checkrepublic:
+    image: ghcr.io/checkrepublic/checkrepublic:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:3000"
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    networks:
+      - net
+networks: 
+  net:
