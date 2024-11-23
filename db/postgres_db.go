@@ -3,6 +3,7 @@ package db
 import (
 	"check_republic/models"
 	"context"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/jackc/pgx/v5"
@@ -124,27 +125,20 @@ func (p PostgresDB) GetAllOffers(ctx context.Context) models.Offers {
 	}
 }
 
-func (p PostgresDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeRangeStart uint64, timeRangeEnd uint64, numberDays uint64, sortOrder string, page uint64, pageSize uint64, priceRangeWidth uint64, minFreeKilometerWidth uint64, minNumberSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) (dto models.DTO) {
-	// Query for offers
-	// filteredMandatoryQuery := `
-	// 	SELECT *
-	// 	FROM offers
-	// 	WHERE region_id = any($1)  -- Match the region or any of its subregions
-	// 	AND start_date >= $2 
-	// 	AND end_date <= $3
-	// 	AND (end_date - start_date) / 86400000 >= $4  -- The number of full days (24h) the car is available within the rangeStart and rangeEnd
-	// 	`
-	// filteredMandatoryQuery = filteredMandatoryQuery
+func buildBaseQuery() string {
+	return `
+	SELECT *
+	FROM offers
+	WHERE region_id = ANY($1)  -- Match the region or any of its subregions
+	AND start_date >= $2 
+	AND end_date <= $3
+	AND (end_date - start_date) >= ($4 * 86400000)  -- The number of full days (24h) the car is available within the rangeStart and rangeEnd
+	`
+}
 
-	priceRangeCount := `
-	WITH offers AS (
-		SELECT *
-		FROM offers
-		WHERE region_id = any($1)  -- Match the region or any of its subregions
-		AND start_date >= $2 
-		AND end_date <= $3
-		AND (end_date - start_date) / 86400000 >= $4  -- The number of full days (24h) the car is available within the rangeStart and rangeEnd
-	),
+func countPriceRange(baseQuery string) string {
+	return fmt.Sprintf(`WITH offers AS (
+		%s),
 	price_ranges AS (
 		SELECT * from generate_series(0, (SELECT max(price) FROM offers), $5) AS range_start
 	)
@@ -158,115 +152,93 @@ func (p PostgresDB) GetFilteredOffers(ctx context.Context, regionID uint64, time
     INNER JOIN
         offers t ON t.price >= pr.range_start AND t.price < pr.range_start + $5
     GROUP BY
-        pr.range_start
-`
+        pr.range_start`, baseQuery)
+}
 
-	carTypeCountQuery := `
-	WITH offers AS (
-		SELECT *
-		FROM offers
-		WHERE region_id = any($1)  -- Match the region or any of its subregions
-		AND start_date >= $2 
-		AND end_date <= $3
-		AND (end_date - start_date) / 86400000 >= $4  -- The number of full days (24h) the car is available within the rangeStart and rangeEnd
-	)
+func countCarType(baseQuery string) string {
+	return fmt.Sprintf(`WITH offers AS (
+		%s)
 			SELECT
 				car_type,
 				count(*) as count
 			FROM offers
-					WHERE $5
+			GROUP BY car_type`, baseQuery)
+}
 
-			GROUP BY car_type`
-	seatsCount := `
+func countSeats(baseQuery string) string {
+	return fmt.Sprintf(`
 	WITH offers AS (
-		SELECT *
-		FROM offers
-		WHERE region_id = any($1)  -- Match the region or any of its subregions
-		AND start_date >= $2 
-		AND end_date <= $3
-		AND (end_date - start_date) / 86400000 >= $4  -- The number of full days (24h) the car is available within the rangeStart and rangeEnd
-	)
+		%s)
 			SELECT
 				number_seats,
 				count(*) as count
 			FROM offers
-					WHERE $5
-
 			GROUP BY number_seats
-		`
-	freeKilometerRange := `
+		`, baseQuery)
+}
+
+func countFreeKilometer(baseQuery string) string {
+	return fmt.Sprintf(`
 	WITH offers AS (
-		SELECT *
-		FROM offers
-		WHERE region_id = any($1)  -- Match the region or any of its subregions
-		AND start_date >= $2 
-		AND end_date <= $3
-		AND (end_date - start_date) / 86400000 >= $4  -- The number of full days (24h) the car is available within the rangeStart and rangeEnd
-	),
+		%s),
 	free_kilometer_ranges AS (
-    SELECT generate_series(0, (SELECT max(free_kilometers) FROM offers), $6) AS range_start
+    SELECT generate_series(0, (SELECT max(free_kilometers) FROM offers), $5) AS range_start
 	)
 
     SELECT
         fkr.range_start,
-		fkr.range_start + $6 AS range_end,
+		fkr.range_start + $5 AS range_end,
         COUNT(*) AS item_count
     FROM
         free_kilometer_ranges fkr
     INNER JOIN
-        offers t ON t.free_kilometers >= fkr.range_start AND t.free_kilometers < fkr.range_start + $6
-	WHERE $5
+        offers t ON t.free_kilometers >= fkr.range_start AND t.free_kilometers < fkr.range_start + $5
     GROUP BY
         fkr.range_start
-`
-	vollkaskoCountQuery := `
+`, baseQuery)
+}
+
+func countVollkasko(baseQuery string) string {
+	return fmt.Sprintf(`
 	WITH offers AS (
-		SELECT *
-		FROM offers
-		WHERE region_id = any($1)  -- Match the region or any of its subregions
-		AND start_date >= $2 
-		AND end_date <= $3
-		AND (end_date - start_date) / 86400000 >= $4  -- The number of full days (24h) the car is available within the rangeStart and rangeEnd
-	)
+		%s)
 			SELECT
 				has_vollkasko,
 				count(*) as count
 			FROM offers
-					WHERE $5
+			GROUP BY has_vollkasko`, baseQuery)
+}
 
-			GROUP BY has_vollkasko`
-
-	orderedAndPaginated := `
+func orderedAndPaginated(baseQuery string, sortOrder string) string {
+	return fmt.Sprintf(`
 	WITH offers AS (
-		SELECT *
-		FROM offers
-		WHERE region_id = any($1)  -- Match the region or any of its subregions
-		AND start_date >= $2 
-		AND end_date <= $3
-		AND (end_date - start_date) / 86400000 >= $4  -- The number of full days (24h) the car is available within the rangeStart and rangeEnd
-	)
+		%s)
 			SELECT *
 			FROM offers
-			WHERE ($6::int IS NULL OR number_seats >= $6)
-			AND $5
-		AND ($7::int IS NULL OR price >= $7)
-		AND ($8::int IS NULL OR price < $8)
-		AND ($9::text IS NULL OR car_type = $9)
-		AND (NOT $10 OR has_vollkasko = true)
-		AND ($11::int IS NULL OR free_kilometers >= $11)
-		ORDER BY price ` + parseSortOrder(sortOrder) + `
-		LIMIT $12 OFFSET $13  `
+			WHERE ($5::int IS NULL OR number_seats >= $5)
+		AND ($6::int IS NULL OR price >= $6)
+		AND ($7::int IS NULL OR price < $7)
+		AND ($8::text IS NULL OR car_type = $8)
+		AND (NOT $9 OR has_vollkasko = true)
+		AND ($10::int IS NULL OR free_kilometers >= $10)
+		ORDER BY price %s
+		LIMIT $11 OFFSET $12 `, baseQuery, sortOrder)
 
-	// Pagination offset
+}
+
+func (p PostgresDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeRangeStart uint64, timeRangeEnd uint64, numberDays uint64, sortOrder string, page uint64, pageSize uint64, priceRangeWidth uint64, minFreeKilometerWidth uint64, minNumberSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) (dto models.DTO) { // Pagination offset
+	baseQuery := buildBaseQuery()
+	validRegionIds := models.RegionIdToMostSpecificRegionId[int32(regionID)]
+	log.Infof("Valid region ids: %v", validRegionIds)
+
 	offset := (page - 1) * pageSize
 
 	// Query execution
-	rows, err := p.Db.Query(ctx, orderedAndPaginated,
-		regionIdToMostSpecificRegionId[regionID],
+	rows, err := p.Db.Query(ctx, orderedAndPaginated(baseQuery, parseSortOrder(sortOrder)),
+		validRegionIds,
 		timeRangeStart,
 		timeRangeEnd,
 		numberDays,
-		true,
 		minNumberSeats,
 		minPrice,
 		maxPrice,
@@ -289,7 +261,8 @@ func (p PostgresDB) GetFilteredOffers(ctx context.Context, regionID uint64, time
 	}
 
 	// collect price range
-	rows, err = p.Db.Query(ctx, priceRangeCount, regionIdToMostSpecificRegionId[regionID],
+	rows, err = p.Db.Query(ctx, countPriceRange(baseQuery),
+		validRegionIds,
 		timeRangeStart,
 		timeRangeEnd,
 		numberDays,
@@ -312,11 +285,12 @@ func (p PostgresDB) GetFilteredOffers(ctx context.Context, regionID uint64, time
 	}
 
 	// collect car type count
-	rows, err = p.Db.Query(ctx, carTypeCountQuery, regionIdToMostSpecificRegionId[regionID],
+	rows, err = p.Db.Query(ctx, countCarType(baseQuery),
+		validRegionIds,
 		timeRangeStart,
 		timeRangeEnd,
 		numberDays,
-		true)
+	)
 	if err != nil {
 		log.Error("Unable to fetch car type count", err)
 		return dto
@@ -342,11 +316,12 @@ func (p PostgresDB) GetFilteredOffers(ctx context.Context, regionID uint64, time
 	carTypeCount.Family = carTypeCountMap["family"]
 
 	// collect seats count
-	rows, err = p.Db.Query(ctx, seatsCount, regionIdToMostSpecificRegionId[regionID],
+	rows, err = p.Db.Query(ctx, countSeats(baseQuery),
+		validRegionIds,
 		timeRangeStart,
 		timeRangeEnd,
 		numberDays,
-		true)
+	)
 	if err != nil {
 		log.Error("Unable to fetch seats count", err)
 		return dto
@@ -365,11 +340,12 @@ func (p PostgresDB) GetFilteredOffers(ctx context.Context, regionID uint64, time
 	}
 
 	// collect free kilometer range
-	rows, err = p.Db.Query(ctx, freeKilometerRange, regionIdToMostSpecificRegionId[regionID],
+	rows, err = p.Db.Query(ctx, countFreeKilometer(baseQuery),
+		validRegionIds,
 		timeRangeStart,
 		timeRangeEnd,
 		numberDays,
-		true, minFreeKilometerWidth)
+		minFreeKilometerWidth)
 	if err != nil {
 		log.Error("Unable to fetch free kilometer range", err)
 		return dto
@@ -388,11 +364,12 @@ func (p PostgresDB) GetFilteredOffers(ctx context.Context, regionID uint64, time
 	}
 
 	// collect vollkasko count
-	rows, err = p.Db.Query(ctx, vollkaskoCountQuery, regionIdToMostSpecificRegionId[regionID],
+	rows, err = p.Db.Query(ctx, countVollkasko(baseQuery),
+		validRegionIds,
 		timeRangeStart,
 		timeRangeEnd,
 		numberDays,
-		true)
+	)
 	if err != nil {
 		log.Error("Unable to fetch vollkasko count", err)
 		return dto
@@ -430,132 +407,4 @@ func (p PostgresDB) DeleteAllOffers(ctx context.Context) error {
 	query := `DELETE FROM offers`
 	_, err := p.Db.Exec(ctx, query)
 	return err
-}
-
-var regionIdToMostSpecificRegionId = map[uint64][]uint64{
-	58:  {58},
-	59:  {59},
-	21:  {58, 59},
-	60:  {60},
-	61:  {61},
-	22:  {60, 61},
-	62:  {62},
-	63:  {63},
-	23:  {62, 63},
-	7:   {58, 59, 60, 61, 62, 63},
-	64:  {64},
-	65:  {65},
-	24:  {64, 65},
-	66:  {66},
-	67:  {67},
-	25:  {66, 67},
-	68:  {68},
-	69:  {69},
-	26:  {68, 69},
-	70:  {70},
-	71:  {71},
-	27:  {70, 71},
-	72:  {72},
-	73:  {73},
-	28:  {72, 73},
-	8:   {64, 65, 66, 67, 68, 69, 70, 71, 72, 73},
-	74:  {74},
-	75:  {75},
-	29:  {74, 75},
-	76:  {76},
-	77:  {77},
-	30:  {76, 77},
-	9:   {74, 75, 76, 77},
-	1:   {58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77},
-	78:  {78},
-	79:  {79},
-	80:  {80},
-	81:  {81},
-	31:  {78, 79, 80, 81},
-	82:  {82},
-	83:  {83},
-	32:  {82, 83},
-	84:  {84},
-	85:  {85},
-	33:  {84, 85},
-	86:  {86},
-	87:  {87},
-	34:  {86, 87},
-	88:  {88},
-	89:  {89},
-	35:  {88, 89},
-	10:  {78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89},
-	90:  {90},
-	91:  {91},
-	36:  {90, 91},
-	92:  {92},
-	93:  {93},
-	37:  {92, 93},
-	11:  {90, 91, 92, 93},
-	2:   {78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93},
-	94:  {94},
-	95:  {95},
-	38:  {94, 95},
-	96:  {96},
-	97:  {97},
-	39:  {96, 97},
-	12:  {94, 95, 96, 97},
-	98:  {98},
-	99:  {99},
-	40:  {98, 99},
-	100: {100},
-	41:  {100},
-	101: {101},
-	102: {102},
-	42:  {101, 102},
-	13:  {98, 99, 100, 101, 102},
-	103: {103},
-	43:  {103},
-	104: {104},
-	105: {105},
-	44:  {104, 105},
-	14:  {103, 104, 105},
-	3:   {94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105},
-	106: {106},
-	107: {107},
-	45:  {106, 107},
-	108: {108},
-	109: {109},
-	46:  {108, 109},
-	15:  {106, 107, 108, 109},
-	110: {110},
-	111: {111},
-	47:  {110, 111},
-	112: {112},
-	113: {113},
-	48:  {112, 113},
-	16:  {110, 111, 112, 113},
-	4:   {106, 107, 108, 109, 110, 111, 112, 113},
-	114: {114},
-	115: {115},
-	49:  {114, 115},
-	116: {116},
-	117: {117},
-	50:  {116, 117},
-	17:  {114, 115, 116, 117},
-	118: {118},
-	51:  {118},
-	119: {119},
-	120: {120},
-	52:  {119, 120},
-	18:  {118, 119, 120},
-	5:   {114, 115, 116, 117, 118, 119, 120},
-	121: {121},
-	53:  {121},
-	122: {122},
-	54:  {122},
-	123: {123},
-	124: {124},
-	55:  {123, 124},
-	19:  {121, 122, 123, 124},
-	56:  {56},
-	57:  {57},
-	20:  {56, 57},
-	6:   {121, 122, 123, 124, 56, 57},
-	0: {58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 56, 57},
 }
