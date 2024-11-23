@@ -107,7 +107,8 @@ func getHandler(c *fiber.Ctx) error {
 	if minNumberSeatsParam == "" {
 		minNumberSeats = nil
 	} else {
-		*minNumberSeats, _ = strconv.ParseUint(minNumberSeatsParam, 10, 64)
+		parsedValue, _ := strconv.ParseUint(minNumberSeatsParam, 10, 64)
+		minNumberSeats = &parsedValue // Initialize the pointer with a valid address
 	}
 
 	var minPrice *uint64
@@ -115,7 +116,8 @@ func getHandler(c *fiber.Ctx) error {
 	if minPriceParam == "" {
 		minPrice = nil
 	} else {
-		*minPrice, _ = strconv.ParseUint(minPriceParam, 10, 64)
+		parsed, _ := strconv.ParseUint(minPriceParam, 10, 64)
+		minPrice = &parsed
 	}
 
 	var maxPrice *uint64
@@ -123,7 +125,8 @@ func getHandler(c *fiber.Ctx) error {
 	if maxPriceParam == "" {
 		maxPrice = nil
 	} else {
-		*maxPrice, _ = strconv.ParseUint(maxPriceParam, 10, 64)
+		parsed, _ := strconv.ParseUint(maxPriceParam, 10, 64)
+		maxPrice = &parsed
 	}
 
 	var carType *string
@@ -131,7 +134,7 @@ func getHandler(c *fiber.Ctx) error {
 	if carTypeParam == "" {
 		carType = nil
 	} else {
-		*carType = carTypeParam
+		carType = &carTypeParam
 	}
 
 	var onlyVollkasko *bool
@@ -139,7 +142,8 @@ func getHandler(c *fiber.Ctx) error {
 	if onlyVollkaskoParam == "" {
 		onlyVollkasko = nil
 	} else {
-		*onlyVollkasko, _ = strconv.ParseBool(onlyVollkaskoParam)
+		parsed, _ := strconv.ParseBool(onlyVollkaskoParam)
+		onlyVollkasko = &parsed
 	}
 
 	var minFreeKilometer *uint64
@@ -147,7 +151,8 @@ func getHandler(c *fiber.Ctx) error {
 	if minFreeKilometerParam == "" {
 		minFreeKilometer = nil
 	} else {
-		*minFreeKilometer, _ = strconv.ParseUint(minFreeKilometerParam, 10, 64)
+		parsed, _ := strconv.ParseUint(minFreeKilometerParam, 10, 64)
+		minFreeKilometer = &parsed
 	}
 
 	offers := db.DB.GetFilteredOffers(c.Context(),

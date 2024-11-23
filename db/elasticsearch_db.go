@@ -26,7 +26,7 @@ func InitElasticSearch() {
 		"settings": {
 			"number_of_shards": 1,
 			"number_of_replicas": 0,
-			"refresh_interval": "-1"
+			"refresh_interval": "1s"
 		},
 		"mappings": {
 			"properties": {
@@ -109,6 +109,7 @@ func (e ElasticSearchDB) CreateOffers(ctx context.Context, offers ...models.Offe
 		// Create the document data for the bulk request
 		offerMap := map[string]interface{}{
 			"ID":                   offer.ID,
+			"data":                 offer.Data,
 			"mostSpecificRegionID": offer.MostSpecificRegionID,
 			"startDate":            offer.StartDate,
 			"endDate":              offer.EndDate,
@@ -423,6 +424,7 @@ func (e ElasticSearchDB) GetFilteredOffers(
 			"filter": append(baseQuery["bool"].(map[string]interface{})["filter"].([]map[string]interface{}), optionalFilters...),
 		},
 	}
+	log.Infof("Final Query %v", finalQuery)
 
 	// Sorting and pagination
 	sortField := "price"
@@ -477,6 +479,7 @@ func (e ElasticSearchDB) GetFilteredOffers(
 			} `json:"hits"`
 		} `json:"hits"`
 	}
+	log.Info("Final Query Result", finalRes.Body)
 	if err := json.NewDecoder(finalRes.Body).Decode(&finalQueryResult); err != nil {
 		log.Errorf("Error parsing final query response: %s", err)
 		return models.DTO{}
@@ -484,6 +487,7 @@ func (e ElasticSearchDB) GetFilteredOffers(
 
 	// Parse final hits
 	var offers []models.Offer
+	log.Debug("Final Hits", finalQueryResult.Hits.Hits)
 	for _, hit := range finalQueryResult.Hits.Hits {
 		offers = append(offers, hit.Source)
 	}
