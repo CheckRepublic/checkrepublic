@@ -131,8 +131,6 @@ func (e ElasticSearchDB) CreateOffers(ctx context.Context, offers ...models.Offe
 		}
 	}
 
-	log.Info("All offers have been successfully created")
-
 	return nil
 }
 
@@ -150,7 +148,6 @@ func (e ElasticSearchDB) executeBulkRequest(ctx context.Context, buf bytes.Buffe
 		return fmt.Errorf("bulk operation failed: %s", res.String())
 	}
 
-	log.Info("Bulk operation completed successfully")
 	return nil
 }
 
@@ -209,7 +206,6 @@ func (e ElasticSearchDB) GetAllOffers(ctx context.Context) models.Offers {
 		offers = append(offers, hit.Source)
 	}
 
-	log.Info("Retrieved all offers successfully")
 	return models.Offers{Offers: offers}
 }
 
@@ -275,15 +271,10 @@ func (e ElasticSearchDB) GetFilteredOffers(
 					long carStart = doc['startDate'].value.toInstant().toEpochMilli();
 					long carEnd = doc['endDate'].value.toInstant().toEpochMilli();
 
-					double actualStart = Math.max(carStart, params.rangeStart);
-					double actualEnd = Math.min(carEnd, params.rangeEnd);
-
-					double overlapMillis = Math.max(0, actualEnd - actualStart);
+					double overlapMillis = Math.max(0, carEnd - carStart);
 					return overlapMillis >= params.requiredOverlapMillis;
 				`,
 					"params": map[string]interface{}{
-						"rangeStart":            timeRangeStart,
-						"rangeEnd":              timeRangeEnd,
 						"requiredOverlapMillis": requiredOverlapMillis,
 					},
 				},
@@ -421,7 +412,6 @@ func (e ElasticSearchDB) GetFilteredOffers(
 			"filter": append(baseQuery["bool"].(map[string]interface{})["filter"].([]map[string]interface{}), optionalFilters...),
 		},
 	}
-	log.Infof("Final Query %v", finalQuery)
 
 	// Sorting and pagination
 	sortField := "price"
@@ -481,7 +471,6 @@ func (e ElasticSearchDB) GetFilteredOffers(
 			} `json:"hits"`
 		} `json:"hits"`
 	}
-	log.Info("Final Query Result", finalRes.Body)
 	if err := json.NewDecoder(finalRes.Body).Decode(&finalQueryResult); err != nil {
 		log.Errorf("Error parsing final query response: %s", err)
 		return models.DTO{}
@@ -489,7 +478,6 @@ func (e ElasticSearchDB) GetFilteredOffers(
 
 	// Parse final hits
 	var offers []models.OfferDTO
-	log.Debug("Final Hits", finalQueryResult.Hits.Hits)
 	for _, hit := range finalQueryResult.Hits.Hits {
 		offers = append(offers, models.OfferDTO{ID: hit.Source.ID.String(), Data: hit.Source.Data})
 	}

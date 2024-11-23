@@ -2,8 +2,6 @@ package db
 
 import (
 	"check_republic/models"
-
-	"github.com/gofiber/fiber/v2/log"
 )
 
 func parseHistogramBuckets(agg interface{}, interval uint64) []models.HistogramRange {
@@ -19,7 +17,6 @@ func parseHistogramBuckets(agg interface{}, interval uint64) []models.HistogramR
 	var ranges []models.HistogramRange
 	for _, bucket := range buckets {
 		bucketMap := bucket.(map[string]interface{})
-		log.Info(bucketMap)
 		count := uint64(bucketMap["doc_count"].(float64))
 		if count == 0 {
 			continue
@@ -43,7 +40,6 @@ func parseCarTypeCounts(agg interface{}) models.CarTypeCount {
 	if !ok {
 		return models.CarTypeCount{}
 	}
-	log.Debug("CarTypeCounts", buckets)
 
 	carTypeCount := models.CarTypeCount{}
 	for _, bucket := range buckets {
@@ -97,7 +93,6 @@ func parseVollkaskoCount(agg interface{}) models.VollkaskoCount {
 		return models.VollkaskoCount{}
 	}
 
-	log.Debug(buckets)
 	vollkaskoCount := models.VollkaskoCount{}
 	for _, bucket := range buckets {
 		bucketMap := bucket.(map[string]interface{})
