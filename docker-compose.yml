@@ -12,6 +12,11 @@ services:
       - "9300:9300"
     networks:
       - net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
   checkrepublic:
     image: ghcr.io/checkrepublic/checkrepublic:latest
     build:
