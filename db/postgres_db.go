@@ -56,7 +56,7 @@ END $$;
 
 func createPostgres() (*pgx.Conn, error) {
 	ctx := context.Background()
-	conn, err := pgx.Connect(ctx, "postgres://postgres:postgres@localhost/postgres")
+	conn, err := pgx.Connect(ctx, "postgres://postgres:postgres@postgres/postgres")
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
@@ -130,7 +130,7 @@ func (p PostgresDB) GetFilteredOffers(ctx context.Context, regionID uint64, time
 	// 	SELECT *
 	// 	FROM offers
 	// 	WHERE region_id = any($1)  -- Match the region or any of its subregions
-	// 	AND start_date >= $2 
+	// 	AND start_date >= $2
 	// 	AND end_date <= $3
 	// 	AND (end_date - start_date) / 86400000 >= $4  -- The number of full days (24h) the car is available within the rangeStart and rangeEnd
 	// 	`
@@ -557,5 +557,5 @@ var regionIdToMostSpecificRegionId = map[uint64][]uint64{
 	57:  {57},
 	20:  {56, 57},
 	6:   {121, 122, 123, 124, 56, 57},
-	0: {58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 56, 57},
+	0:   {58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 56, 57},
 }
