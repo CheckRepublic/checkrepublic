@@ -53,11 +53,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           push: true
 
-      - name: DEBUG - Output tags
-        run: |
-          echo "image_tag=$(echo ${{ steps.meta.outputs.tags }} | head -n 1)"
-
       - id: output-tag
         run: |
-          echo "image_tag=$(echo ${{ steps.meta.outputs.tags }} | head -n 1)" >> $GITHUB_OUTPUTcut -d ',' -f
+          echo "image_tag=${{ steps.meta.outputs.tags }}" >> $GITHUB_OUTPUT
 
