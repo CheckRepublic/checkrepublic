@@ -17,7 +17,7 @@ func Filter(regionID uint64,
 	minNumberSeats *uint64,
 	minPrice *uint64,
 	maxPrice *uint64,
-	carType *models.CarType,
+	carType *string,
 	onlyVollkasko *bool,
 	minFreeKilometer *uint64) (offers models.Offers) {
 	offers = db.DB.GetAllOffers()

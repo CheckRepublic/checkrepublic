@@ -118,12 +118,12 @@ func getHandler(c *fiber.Ctx) error {
         *maxPrice, _ = strconv.ParseUint(maxPriceParam, 10, 64)
     }
 
-    var carType *models.CarType
+    var carType *string
 	carTypeParam := c.Query("carType")
     if carTypeParam == "" {
         carType = nil
     } else {
-        *carType = models.CarTypeValue[carTypeParam]
+        *carType = carTypeParam
     }
 
     var onlyVollkasko *bool

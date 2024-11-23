@@ -16,7 +16,7 @@ type Offer struct {
 	EndDate              uint64     `json:"endDate"`
 	NumberSeats          uint64     `json:"numberSeats"`
 	Price                uint64    `json:"price"`
-	CarType              CarType    `json:"carType"`
+	CarType              string   `json:"carType"`
 	HasVollkasko         bool      `json:"hasVollkasko"`
 	FreeKilometers       uint64    `json:"freeKilometers"`
 }
@@ -90,7 +90,7 @@ func (offers *Offers) FilterByPrice(minPrice *uint64, maxPrice *uint64) (ret *Of
 	return ret
 }
 
-func (offers *Offers) FilterByCarType(carType *CarType) (ret *Offers) {
+func (offers *Offers) FilterByCarType(carType *string) (ret *Offers) {
 	if carType == nil {
 		return offers
 	}
