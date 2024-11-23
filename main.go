@@ -15,6 +15,7 @@ import (
 )
 
 var filename = time.Now().String()
+var LogToFile = os.Getenv("LOG") == "true"
 
 func main() {
 	if os.Getenv("DEBUG") == "true" {
@@ -91,7 +92,9 @@ func getAllHandler(c *fiber.Ctx) error {
 }
 
 func postHandler(c *fiber.Ctx) error {
-	debugHelper(c)
+	if LogToFile {
+		debugHelper(c)
+	}
 	var offer models.Offers
 
 	// Parse the request body
@@ -106,7 +109,9 @@ func postHandler(c *fiber.Ctx) error {
 }
 
 func getHandler(c *fiber.Ctx) error {
-	debugHelper(c)
+	if LogToFile {
+		debugHelper(c)
+	}
 	regionIDParam := c.Query("regionID")
 	if regionIDParam == "" {
 		return c.Status(fiber.StatusBadRequest).SendString("regionID is required")
@@ -234,6 +239,10 @@ func getHandler(c *fiber.Ctx) error {
 }
 
 func deleteHandler(c *fiber.Ctx) error {
+	if LogToFile {
+		debugHelper(c)
+	}
+
 	db.DB.DeleteAllOffers(c.Context())
 	return c.SendString("All offers deleted")
 }
