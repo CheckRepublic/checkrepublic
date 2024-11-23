@@ -5,6 +5,9 @@ import (
 	"check_republic/models"
 	"os"
 	"strconv"
+	"fmt"
+	"time"
+	"io/ioutil"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -14,7 +17,11 @@ func main() {
 	if os.Getenv("DEBUG") == "true" {
 		log.SetLevel(log.LevelDebug)
 	}
-	db.InitPostgres()
+
+	models.InitRegions()
+
+	// db.InitPostgres()
+	db.InitElasticSearch()
 
 	app := fiber.New()
 
@@ -26,11 +33,35 @@ func main() {
 	log.Fatal(app.Listen(":3000"))
 }
 
+func debugHelper(c *fiber.Ctx) {
+	queryParams := c.Queries()
+
+	// Query Type 
+	queryMethod := c.Method()
+
+	// Get request body
+	body := c.Body()
+
+	// Create a timestamped filename
+	timestamp := time.Now()
+	filename := fmt.Sprintf("request_%s_%s.txt", queryMethod, timestamp)
+
+	// Create the content to be written to the file
+	content := fmt.Sprintf("Query Params: %v\nBody: %s", queryParams, body)
+
+	// Write the content to the file
+	err := ioutil.WriteFile("result/" + filename, []byte(content), 0644)
+	if err != nil {
+		log.Info("Error writing to file")
+	}
+}
+
 func getAllHandler(c *fiber.Ctx) error {
 	return c.JSON(db.DB.GetAllOffers(c.Context()))
 }
 
 func postHandler(c *fiber.Ctx) error {
+	debugHelper(c)
 	var offer models.Offers
 
 	// Parse the request body
@@ -45,6 +76,7 @@ func postHandler(c *fiber.Ctx) error {
 }
 
 func getHandler(c *fiber.Ctx) error {
+	debugHelper(c)
 	regionIDParam := c.Query("regionID")
 	if regionIDParam == "" {
 		return c.Status(fiber.StatusBadRequest).SendString("regionID is required")
@@ -103,7 +135,8 @@ func getHandler(c *fiber.Ctx) error {
 	if minNumberSeatsParam == "" {
 		minNumberSeats = nil
 	} else {
-		*minNumberSeats, _ = strconv.ParseUint(minNumberSeatsParam, 10, 64)
+		parsedValue, _ := strconv.ParseUint(minNumberSeatsParam, 10, 64)
+		minNumberSeats = &parsedValue // Initialize the pointer with a valid address
 	}
 
 	var minPrice *uint64
@@ -111,7 +144,8 @@ func getHandler(c *fiber.Ctx) error {
 	if minPriceParam == "" {
 		minPrice = nil
 	} else {
-		*minPrice, _ = strconv.ParseUint(minPriceParam, 10, 64)
+		parsed, _ := strconv.ParseUint(minPriceParam, 10, 64)
+		minPrice = &parsed
 	}
 
 	var maxPrice *uint64
@@ -119,7 +153,8 @@ func getHandler(c *fiber.Ctx) error {
 	if maxPriceParam == "" {
 		maxPrice = nil
 	} else {
-		*maxPrice, _ = strconv.ParseUint(maxPriceParam, 10, 64)
+		parsed, _ := strconv.ParseUint(maxPriceParam, 10, 64)
+		maxPrice = &parsed
 	}
 
 	var carType *string
@@ -127,7 +162,7 @@ func getHandler(c *fiber.Ctx) error {
 	if carTypeParam == "" {
 		carType = nil
 	} else {
-		*carType = carTypeParam
+		carType = &carTypeParam
 	}
 
 	var onlyVollkasko *bool
@@ -135,7 +170,8 @@ func getHandler(c *fiber.Ctx) error {
 	if onlyVollkaskoParam == "" {
 		onlyVollkasko = nil
 	} else {
-		*onlyVollkasko, _ = strconv.ParseBool(onlyVollkaskoParam)
+		parsed, _ := strconv.ParseBool(onlyVollkaskoParam)
+		onlyVollkasko = &parsed
 	}
 
 	var minFreeKilometer *uint64
@@ -143,7 +179,8 @@ func getHandler(c *fiber.Ctx) error {
 	if minFreeKilometerParam == "" {
 		minFreeKilometer = nil
 	} else {
-		*minFreeKilometer, _ = strconv.ParseUint(minFreeKilometerParam, 10, 64)
+		parsed, _ := strconv.ParseUint(minFreeKilometerParam, 10, 64)
+		minFreeKilometer = &parsed
 	}
 
 	offers := db.DB.GetFilteredOffers(c.Context(),
@@ -167,6 +204,7 @@ func getHandler(c *fiber.Ctx) error {
 }
 
 func deleteHandler(c *fiber.Ctx) error {
+	debugHelper(c)
 	db.DB.DeleteAllOffers(c.Context())
 	return c.SendString("All offers deleted")
 }

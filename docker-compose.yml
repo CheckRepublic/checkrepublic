@@ -1,20 +1,22 @@
+version: '3.8'
 services:
-  db:
-    image: 'postgres:16-alpine'
-    container_name: postgres
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    container_name: elasticsearch
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=checkrepublic
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d checkrepublic -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - discovery.type=single-node
+      - xpack.security.enabled=false        # Disable security features (authentication, HTTPS)
+      - xpack.security.http.ssl.enabled=false # Disable HTTPS
     ports:
-      - "5432:5432"
+      - "9200:9200"
+      - "9300:9300"
     networks:
       - net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
   checkrepublic:
     image: ghcr.io/checkrepublic/checkrepublic:latest
     build:
@@ -23,7 +25,10 @@ services:
     ports:
       - "80:3000"
     depends_on:
-      - db
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
     networks:
       - net
 networks: 
