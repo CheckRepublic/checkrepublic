@@ -13,4 +13,4 @@ jobs:
     uses: ./.github/workflows/deploy-image.yml
     secrets: inherit
     with:
-      image_tag: "${{ needs.build-container.outputs.image_tag }}"
+      version: "${{ needs.build-container.outputs.version }}"

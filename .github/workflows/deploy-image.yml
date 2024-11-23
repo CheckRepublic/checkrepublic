@@ -3,8 +3,8 @@ name: Build, Push, and Deploy Docker Image
 on:
   workflow_call:
     inputs:
-        image_tag:
-          default: "ghcr.io/${{ github.repository }}/checkrepublic:latest"
+        version:
+          default: "latest"
           type: string
 
 jobs:
@@ -12,10 +12,6 @@ jobs:
     name: Deploy Docker Image
     runs-on: ubuntu-latest
     steps:
-      - name: DEBUG - Output tags
-        run: |
-          echo "image_tag=${{ inputs.image_tag }}"
-
       - name: SSH to VM and Execute Docker
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -37,7 +33,7 @@ jobs:
               docker rm $CONTAINER_NAME
             fi
 
-            TAG=${{inputs.image_tag}}
+            TAG="ghcr.io/${{ github.repository }}/checkrepublic:${{ inputs.version }}"
             echo "Pulling the latest image..."
             docker pull $TAG
             

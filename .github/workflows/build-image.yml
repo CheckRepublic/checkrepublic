@@ -3,16 +3,16 @@ name: Build, Push, and Deploy Docker Image
 on:
   workflow_call:
     outputs:
-      image_tag: 
+      version: 
         description: "The tag of the image that was built"
-        value: ${{ jobs.build.outputs.image_tag }}
+        value: "latest"
 
 jobs:
   build:
     name: Build Docker Image
     runs-on: ubuntu-latest
     outputs:
-      image: ${{ steps.meta.outputs.image }}
+      version: ${{ steps.meta.outputs.version }}
       tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout
@@ -55,6 +55,5 @@ jobs:
 
       - id: output-tag
         run: |
-          first_tag=$(echo "${{ steps.meta.outputs.tags }}" | cut -d ',' -f 1)
-          echo "image_tag=$first_tag" >> $GITHUB_OUTPUT
+          version="${{ steps.meta.outputs.version }}" >> $GITHUB_OUTPUT
 
