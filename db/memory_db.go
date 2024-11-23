@@ -3,10 +3,9 @@ package db
 import (
 	"check_republic/models"
 	"context"
+	"log/slog"
 	"sort"
 	"sync"
-
-	"github.com/gofiber/fiber/v2/log"
 )
 
 type MemoryDB struct {
@@ -19,7 +18,7 @@ func InitMemoryDB() {
 		db:     []*models.Offer{},
 		rwlock: &sync.RWMutex{},
 	}
-	log.Info("Database created")
+	slog.Info("Database created")
 }
 
 func (m *MemoryDB) CreateOffers(ctx context.Context, offers ...*models.Offer) error {
