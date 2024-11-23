@@ -47,7 +47,7 @@ func (offers *Offers) FilterByTimeRange(start uint64, end uint64) (ret *Offers) 
 	ret = &Offers{}
 
 	for _, offer := range offers.Offers {
-		if offer.StartDate <= start && offer.EndDate >= end {
+		if offer.StartDate >= start && offer.EndDate <= start {
 			ret.Offers = append(ret.Offers, offer)
 		}
 	}
