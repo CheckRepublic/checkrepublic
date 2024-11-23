@@ -24,7 +24,7 @@ func Filter(regionID uint64,
 	offers = db.DB.GetAllOffers()
 	offers = *offers.FilterByRegion(regionID).FilterByTimeRange(timeRangeStart, timeRangeEnd).FilterByNumberDays(numberDays).FilterByMinSeats(minNumberSeats).FilterByPrice(minPrice, maxPrice).FilterByCarType(carType).FilterByVollkasko(onlyVollkasko).FilterByMinFreeKm(minFreeKilometer)
 	
-	offersDTO.Offers = offers
+	offersDTO.Offers = offers.Offers
 	offersDTO.PriceRanges = offers.CountPriceRanges(priceRangeWidth)
 	offersDTO.CarTypeCounts = offers.CountCarType()
 	offersDTO.SeatsCount = offers.CountNumberSeats()

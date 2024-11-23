@@ -22,6 +22,10 @@ type Offer struct {
 }
 
 func (offers *Offers) FilterByRegion(regionId uint64) (ret *Offers) {
+	if offers == nil {
+		return offers
+	}
+	ret = &Offers{}
 	validRegions := RegionTree.GetRegionById(regionId).GetLeafs()
 
 	for _, offer := range offers.Offers {
@@ -36,6 +40,10 @@ func (offers *Offers) FilterByRegion(regionId uint64) (ret *Offers) {
 }
 
 func (offers *Offers) FilterByTimeRange(start uint64, end uint64) (ret *Offers) {
+	if offers == nil {
+		return offers
+	}
+	ret = &Offers{}
 	for _, offer := range offers.Offers {
 		if offer.StartDate >= start && offer.EndDate <= end {
 			ret.Offers = append(ret.Offers, offer)
@@ -47,6 +55,10 @@ func (offers *Offers) FilterByTimeRange(start uint64, end uint64) (ret *Offers) 
 
 func (offers *Offers) FilterByNumberDays(num uint64) (ret *Offers) {
 	// The number of full days (24h) the car is available within the rangeStart and rangeEnd
+	if offers == nil {
+		return offers
+	}
+	ret = &Offers{}
     for _, offer := range offers.Offers {
 		if offer.EndDate - offer.StartDate >= num * 24 * 60 * 60 {
 			ret.Offers = append(ret.Offers, offer)
@@ -57,6 +69,10 @@ func (offers *Offers) FilterByNumberDays(num uint64) (ret *Offers) {
 }
 
 func (offers *Offers) FilterByMinSeats(numSeats *uint64) (ret *Offers) {
+	if offers == nil {
+		return offers
+	}
+	ret = &Offers{}
 	if numSeats == nil {
 		return offers
 	}
@@ -71,6 +87,10 @@ func (offers *Offers) FilterByMinSeats(numSeats *uint64) (ret *Offers) {
 }
 
 func (offers *Offers) FilterByPrice(minPrice *uint64, maxPrice *uint64) (ret *Offers) {
+	if offers == nil {
+		return offers
+	}
+	ret = &Offers{}
 	if minPrice != nil {
 		for _, offer := range offers.Offers {
 			if offer.Price >= *minPrice {
@@ -91,6 +111,10 @@ func (offers *Offers) FilterByPrice(minPrice *uint64, maxPrice *uint64) (ret *Of
 }
 
 func (offers *Offers) FilterByCarType(carType *string) (ret *Offers) {
+	if offers == nil {
+		return offers
+	}
+	ret = &Offers{}
 	if carType == nil {
 		return offers
 	}
@@ -105,6 +129,10 @@ func (offers *Offers) FilterByCarType(carType *string) (ret *Offers) {
 }
 
 func (offers *Offers) FilterByVollkasko(vollKasko *bool) (ret *Offers) {
+	if offers == nil {
+		return offers
+	}
+	ret = &Offers{}
 	if vollKasko == nil {
 		return offers
 	}
@@ -119,6 +147,10 @@ func (offers *Offers) FilterByVollkasko(vollKasko *bool) (ret *Offers) {
 }
 
 func (offers *Offers) FilterByMinFreeKm(km *uint64) (ret *Offers) {
+	if offers == nil {
+		return offers
+	}
+	ret = &Offers{}
 	if km == nil {
 		return offers
 	}
@@ -133,6 +165,9 @@ func (offers *Offers) FilterByMinFreeKm(km *uint64) (ret *Offers) {
 }
 
 func (offers *Offers) CountPriceRanges(priceRangeWidth uint64) (priceRanges []PriceRange) {
+	if offers == nil {
+		return priceRanges
+	}
 	priceRangeMap := make(map[uint64]*PriceRange)
 	for _, offer := range offers.Offers {
 		priceRange := offer.Price / priceRangeWidth
@@ -151,6 +186,9 @@ func (offers *Offers) CountPriceRanges(priceRangeWidth uint64) (priceRanges []Pr
 }
 
 func (offers *Offers) CountCarType () (carTypeCounts CarTypeCount) {
+	if offers == nil {
+		return carTypeCounts
+	}
 	for _, offer := range offers.Offers {
 		switch offer.CarType {
 		case "small":
@@ -168,6 +206,9 @@ func (offers *Offers) CountCarType () (carTypeCounts CarTypeCount) {
 }
 
 func (offers *Offers) CountNumberSeats() (seatCounts []SeatsCount) {
+	if offers == nil {
+		return seatCounts
+	}
 	seatCountMap := make(map[uint64]*SeatsCount)
 	for _, offer := range offers.Offers {
 		if _, ok := seatCountMap[offer.NumberSeats]; ok {
@@ -185,6 +226,9 @@ func (offers *Offers) CountNumberSeats() (seatCounts []SeatsCount) {
 }
 
 func (offers *Offers) CountFreeKilometerRange(freeKilometerWidth uint64) (freeKilometerRanges []FreeKilometerRange) {
+	if offers == nil {
+		return freeKilometerRanges
+	}
 	freeKilometerMap := make(map[uint64]*FreeKilometerRange)
 	for _, offer := range offers.Offers {
 		freeKilometerRange := offer.FreeKilometers / freeKilometerWidth
@@ -203,6 +247,9 @@ func (offers *Offers) CountFreeKilometerRange(freeKilometerWidth uint64) (freeKi
 }
 
 func (offers *Offers) CountVollkasko() (vollkaskoCount VollkaskoCount) {
+	if offers == nil {
+		return vollkaskoCount
+	}
 	for _, offer := range offers.Offers {
 		if offer.HasVollkasko {
 			vollkaskoCount.TrueCount = vollkaskoCount.TrueCount + 1
