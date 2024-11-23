@@ -131,3 +131,85 @@ func (offers *Offers) FilterByMinFreeKm(km *uint64) (ret *Offers) {
 	
 	return ret
 }
+
+func (offers *Offers) CountPriceRanges(priceRangeWidth uint64) (priceRanges []PriceRange) {
+	priceRangeMap := make(map[uint64]*PriceRange)
+	for _, offer := range offers.Offers {
+		priceRange := offer.Price / priceRangeWidth
+		if _, ok := priceRangeMap[priceRange]; ok {
+			priceRangeMap[priceRange].Count = priceRangeMap[priceRange].Count + 1
+		} else {
+			priceRangeMap[priceRange] = &PriceRange{priceRange * priceRangeWidth, (priceRange + 1) * priceRangeWidth, 1}
+		}
+	}
+
+	for _, priceRange := range priceRangeMap {
+		priceRanges = append(priceRanges, *priceRange)
+	}
+
+	return priceRanges
+}
+
+func (offers *Offers) CountCarType () (carTypeCounts CarTypeCount) {
+	for _, offer := range offers.Offers {
+		switch offer.CarType {
+		case "small":
+			carTypeCounts.Small = carTypeCounts.Small + 1
+		case "sports":
+			carTypeCounts.Sports = carTypeCounts.Sports + 1
+		case "luxury":
+			carTypeCounts.Luxury = carTypeCounts.Luxury + 1
+		case "family":
+			carTypeCounts.Family = carTypeCounts.Family + 1
+		}
+	}
+
+	return carTypeCounts
+}
+
+func (offers *Offers) CountNumberSeats() (seatCounts []SeatsCount) {
+	seatCountMap := make(map[uint64]*SeatsCount)
+	for _, offer := range offers.Offers {
+		if _, ok := seatCountMap[offer.NumberSeats]; ok {
+			seatCountMap[offer.NumberSeats].Count = seatCountMap[offer.NumberSeats].Count + 1
+		} else {
+			seatCountMap[offer.NumberSeats] = &SeatsCount{offer.NumberSeats, 1}
+		}
+	}
+
+	for _, seatCount := range seatCountMap {
+		seatCounts = append(seatCounts, *seatCount)
+	}
+
+	return seatCounts
+}
+
+func (offers *Offers) CountFreeKilometerRange(freeKilometerWidth uint64) (freeKilometerRanges []FreeKilometerRange) {
+	freeKilometerMap := make(map[uint64]*FreeKilometerRange)
+	for _, offer := range offers.Offers {
+		freeKilometerRange := offer.FreeKilometers / freeKilometerWidth
+		if _, ok := freeKilometerMap[freeKilometerRange]; ok {
+			freeKilometerMap[freeKilometerRange].Count = freeKilometerMap[freeKilometerRange].Count + 1
+		} else {
+			freeKilometerMap[freeKilometerRange] = &FreeKilometerRange{freeKilometerRange * freeKilometerWidth, (freeKilometerRange + 1) * freeKilometerWidth, 1}
+		}
+	}
+
+	for _, freeKilometerRange := range freeKilometerMap {
+		freeKilometerRanges = append(freeKilometerRanges, *freeKilometerRange)
+	}
+
+	return freeKilometerRanges
+}
+
+func (offers *Offers) CountVollkasko() (vollkaskoCount VollkaskoCount) {
+	for _, offer := range offers.Offers {
+		if offer.HasVollkasko {
+			vollkaskoCount.TrueCount = vollkaskoCount.TrueCount + 1
+		} else {
+			vollkaskoCount.FalseCount = vollkaskoCount.FalseCount + 1
+		}
+	}
+
+	return vollkaskoCount
+}

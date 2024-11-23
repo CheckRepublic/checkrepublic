@@ -12,6 +12,7 @@ var DB OfferDatabase
 type OfferDatabase interface {
 	CreateOffers(o ...models.Offer)
 	GetAllOffers() models.Offers
+	DeleteAllOffers()
 }
 
 type MemDB struct {
@@ -77,4 +78,16 @@ func (m MemDB) GetAllOffers() models.Offers {
 		offers = append(offers, p)
 	}
 	return models.Offers{Offers: offers}
+}
+
+func (m MemDB) DeleteAllOffers() {
+	txn := m.Db.Txn(true)
+	defer txn.Abort()
+
+	_, err := txn.DeleteAll("offer", "id")
+	if err != nil {
+		log.Error(err)
+	}
+
+	txn.Commit()
 }

@@ -17,13 +17,9 @@ func main() {
 
 	app.Get("/api/offers", getHandler)
 	app.Post("/api/offers", postHandler)
-	app.Delete("/api/offers", helloHandler)
+	app.Delete("/api/offers", deleteHandler)
 
-	log.Fatal(app.Listen(":80"))
-}
-
-func helloHandler(c *fiber.Ctx) error {
-	return c.SendString("Hello, World!")
+	log.Fatal(app.Listen(":3000"))
 }
 
 func postHandler(c *fiber.Ctx) error {
@@ -142,7 +138,7 @@ func getHandler(c *fiber.Ctx) error {
         *minFreeKilometer, _ = strconv.ParseUint(minFreeKilometerParam, 10, 64)
     }
 
-	offers := logic.Filter(regionID,
+	offersWithCounts := logic.Filter(regionID,
 		timeRangeStart,
 		timeRangeEnd,
 		numberDays,
@@ -158,5 +154,10 @@ func getHandler(c *fiber.Ctx) error {
 		onlyVollkasko,
 		minFreeKilometer)
 
-	return c.JSON(offers)
+	return c.JSON(offersWithCounts)
+}
+
+func deleteHandler(c *fiber.Ctx) error {
+	db.DB.DeleteAllOffers()
+    return c.SendString("All offers deleted")
 }

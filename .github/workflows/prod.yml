@@ -1,0 +1,16 @@
+name: Build Image
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-container:
+    uses: ./.github/workflows/build-image.yml
+    secrets: inherit
+  deploy-dev-container:
+    needs: build-container
+    uses: ./.github/workflows/deploy-image.yml
+    secrets: inherit
+    with:
+      image_tag: "${{ needs.build-container.outputs.image_tag }}"
