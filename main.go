@@ -14,7 +14,8 @@ func main() {
 	if os.Getenv("DEBUG") == "true" {
 		log.SetLevel(log.LevelDebug)
 	}
-	db.InitPostgres()
+	// db.InitPostgres()
+	db.InitElasticSearch()
 
 	app := fiber.New()
 
