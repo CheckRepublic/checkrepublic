@@ -26,7 +26,7 @@ func InitElasticSearch() {
 		"settings": {
 			"number_of_shards": 1,
 			"number_of_replicas": 0,
-			"refresh_interval": "30s"
+			"refresh_interval": "-1"
 		},
 		"mappings": {
 			"properties": {
@@ -67,11 +67,29 @@ func createElasticSearch() (*elasticsearch.Client, error) {
 	return es, err
 }
 
-func (e ElasticSearchDB) CreateOffers(ctx context.Context, o ...models.Offer) error {
+func (e ElasticSearchDB) refreshElastic() {
+	res, err := e.es.Indices.Refresh()
+	if err != nil {
+		log.Errorf("Error refreshing index: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		log.Errorf("Error response from Elasticsearch: %s", res.String())
+	}
+}
+
+func (e ElasticSearchDB) CreateOffers(ctx context.Context, offers ...models.Offer) error {
+	if len(offers) == 0 {
+		log.Warn("No offers provided for bulk creation")
+		return nil
+	}
+
+	const maxBatchSize = 5000 // Define a batch size for bulk requests
 	var buf bytes.Buffer
 
-	for _, offer := range o {
-		// Create the metadata line for the bulk request
+	for i, offer := range offers {
+		// Create metadata for the bulk request
 		meta := map[string]interface{}{
 			"index": map[string]interface{}{
 				"_index": "offers",
@@ -81,15 +99,14 @@ func (e ElasticSearchDB) CreateOffers(ctx context.Context, o ...models.Offer) er
 
 		metaData, err := json.Marshal(meta)
 		if err != nil {
-			log.Errorf("Error marshalling bulk metadata: %s", err)
+			log.Errorf("Error marshalling bulk metadata for offer ID %s: %s", offer.ID, err)
 			return err
 		}
 
-		// Append metadata to the buffer
 		buf.Write(metaData)
 		buf.WriteByte('\n')
 
-		// Create the document for the bulk request
+		// Create the document data for the bulk request
 		offerMap := map[string]interface{}{
 			"ID":                   offer.ID,
 			"mostSpecificRegionID": offer.MostSpecificRegionID,
@@ -104,16 +121,30 @@ func (e ElasticSearchDB) CreateOffers(ctx context.Context, o ...models.Offer) er
 
 		offerData, err := json.Marshal(offerMap)
 		if err != nil {
-			log.Errorf("Error marshalling offer: %s", err)
+			log.Errorf("Error marshalling offer data for ID %s: %s", offer.ID, err)
 			return err
 		}
 
-		// Append document data to the buffer
 		buf.Write(offerData)
 		buf.WriteByte('\n')
+
+		// Execute the bulk request in batches
+		if (i+1)%maxBatchSize == 0 || i == len(offers)-1 {
+			if err := e.executeBulkRequest(ctx, buf); err != nil {
+				return err
+			}
+			buf.Reset()
+		}
 	}
 
-	// Execute the bulk operation
+	log.Info("All offers have been successfully created")
+	e.refreshElastic()
+
+	return nil
+}
+
+// Helper method to execute a bulk request
+func (e ElasticSearchDB) executeBulkRequest(ctx context.Context, buf bytes.Buffer) error {
 	res, err := e.es.Bulk(bytes.NewReader(buf.Bytes()), e.es.Bulk.WithContext(ctx))
 	if err != nil {
 		log.Errorf("Error executing bulk operation: %s", err)
@@ -121,7 +152,6 @@ func (e ElasticSearchDB) CreateOffers(ctx context.Context, o ...models.Offer) er
 	}
 	defer res.Body.Close()
 
-	// Check for errors in the bulk response
 	if res.IsError() {
 		log.Errorf("Bulk operation response error: %s", res.String())
 		return fmt.Errorf("bulk operation failed: %s", res.String())
@@ -509,5 +539,6 @@ func (e ElasticSearchDB) DeleteAllOffers(ctx context.Context) error {
 	}
 
 	log.Info("All offers deleted successfully")
+	e.refreshElastic()
 	return nil
 }
