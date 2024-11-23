@@ -440,7 +440,7 @@ func (e ElasticSearchDB) GetFilteredOffers(
 			},
 		},
 	}
-	from := (page - 1) * pageSize
+	from := (page) * pageSize
 
 	// Final query request body
 	finalRequestBody := map[string]interface{}{
