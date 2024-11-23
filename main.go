@@ -1,20 +1,19 @@
 package main
 
 import (
+	"check_republic/db"
+	"check_republic/logic"
 	"check_republic/models"
 	"log"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
 
+var offDB db.OfferDatabase
+
 func main() {
-	// Create the database
-	var err error
-	db, err = CreateDB()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("Database created")
+	offDB = db.Init()
 
 	app := fiber.New()
 
@@ -39,12 +38,12 @@ func postHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	CreateOffers(offer.Offers...)
+	offDB.CreateOffers(offer.Offers...)
 	return c.SendString("Offer created")
 }
 
 func getHandler(c *fiber.Ctx) error {
-    //log the request
+  //log the request
     log.Println(c.Queries())
 
 	regionID := c.Query("regionID")
