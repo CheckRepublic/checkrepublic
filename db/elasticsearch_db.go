@@ -302,7 +302,7 @@ func (e ElasticSearchDB) GetFilteredOffers(
 			priceRange["gte"] = *minPrice
 		}
 		if maxPrice != nil {
-			priceRange["lte"] = *maxPrice
+			priceRange["lt"] = *maxPrice
 		}
 		optionalFilters = append(optionalFilters, map[string]interface{}{
 			"range": map[string]interface{}{
@@ -486,10 +486,10 @@ func (e ElasticSearchDB) GetFilteredOffers(
 	}
 
 	// Parse final hits
-	var offers []models.Offer
+	var offers []models.OfferDTO
 	log.Debug("Final Hits", finalQueryResult.Hits.Hits)
 	for _, hit := range finalQueryResult.Hits.Hits {
-		offers = append(offers, hit.Source)
+		offers = append(offers, models.OfferDTO{ID: hit.Source.ID.String(), Data: hit.Source.Data})
 	}
 
 	// Parse aggregations
