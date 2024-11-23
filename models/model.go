@@ -47,7 +47,7 @@ func (offers *Offers) FilterByTimeRange(start uint64, end uint64) (ret *Offers) 
 	ret = &Offers{}
 
 	for _, offer := range offers.Offers {
-		if offer.StartDate >= start && offer.EndDate <= start {
+		if offer.StartDate >= start && offer.EndDate <= end {
 			ret.Offers = append(ret.Offers, offer)
 		}
 	}
@@ -60,7 +60,7 @@ func (offers *Offers) FilterByNumberDays(num uint64) (ret *Offers) {
 
 	// The number of full days (24h) the car is available within the rangeStart and rangeEnd
 	for _, offer := range offers.Offers {
-		if offer.EndDate-offer.StartDate >= num*24*60*60*1000 {
+		if offer.EndDate-offer.StartDate == num*24*60*60*1000 {
 			ret.Offers = append(ret.Offers, offer)
 		}
 	}
