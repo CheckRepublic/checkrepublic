@@ -3,8 +3,11 @@ package main
 import (
 	"check_republic/db"
 	"check_republic/models"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -21,10 +24,11 @@ func main() {
 	db.InitElasticSearch()
 
 	app := fiber.New()
+	log.Info("Server started")
 
-	app.Get("/api/offers", getHandler)
-	app.Get("/api/offers/all", getAllHandler)
-	app.Post("/api/offers", postHandler)
+	app.Get("/api/offers", printHandler)
+	//app.Get("/api/offers/all", getAllHandler)
+	app.Post("/api/offers", printHandler)
 	app.Delete("/api/offers", deleteHandler)
 
 	log.Fatal(app.Listen(":3000"))
@@ -45,7 +49,34 @@ func postHandler(c *fiber.Ctx) error {
 	}
 
 	db.DB.CreateOffers(c.Context(), offer.Offers...)
-	return c.SendString("Offer created")
+	return c.SendString("Offer created my ass")
+}
+
+func printHandler(c *fiber.Ctx) error {
+	log.Info("Request received")
+	// Get all query parameters
+	queryParams := c.Queries()
+
+	// Query Type 
+		queryMethod := c.Method()
+
+	// Get request body
+	body := c.Body()
+
+	// Create a timestamped filename
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("request_%s_%s.txt", queryMethod, timestamp)
+
+	// Create the content to be written to the file
+	content := fmt.Sprintf("Query Params: %v\nBody: %s", queryParams, body)
+
+	// Write the content to the file
+	err := ioutil.WriteFile("result/" + filename, []byte(content), 0644)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to write to file")
+	}
+
+	return c.SendString("Request data saved successfully")
 }
 
 func getHandler(c *fiber.Ctx) error {

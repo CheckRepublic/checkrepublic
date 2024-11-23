@@ -12,6 +12,7 @@ services:
       - "9300:9300"
     networks:
       - net
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200"]
       interval: 30s
@@ -31,5 +32,9 @@ services:
       - ELASTICSEARCH_URL=http://elasticsearch:9200
     networks:
       - net
+    volumes:
+      - type: bind
+        source: ./result
+        target: /app/result
 networks: 
   net:
