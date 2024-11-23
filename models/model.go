@@ -8,15 +8,22 @@ type Offers struct {
 	Offers []*Offer `json:"offers"`
 }
 
-type ByPrice []*Offer
+type ByPrice struct {
+	Offers []*Offer
+	Asc    bool
+}
 
-func (a ByPrice) Len() int      { return len(a) }
-func (a ByPrice) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByPrice) Len() int      { return len(a.Offers) }
+func (a ByPrice) Swap(i, j int) { a.Offers[i], a.Offers[j] = a.Offers[j], a.Offers[i] }
 func (a ByPrice) Less(i, j int) bool {
-	if a[i].Price == a[j].Price {
-		return a[i].ID.String() < a[j].ID.String()
+	if a.Offers[i].Price == a.Offers[j].Price {
+		return a.Offers[i].ID.String() < a.Offers[j].ID.String()
 	}
-	return a[i].Price < a[j].Price
+
+	if !a.Asc {
+		return a.Offers[i].Price > a.Offers[j].Price
+	}
+	return a.Offers[i].Price < a.Offers[j].Price
 }
 
 // Offer represents the offer details.

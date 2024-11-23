@@ -99,9 +99,9 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 
 	// Sorting
 	if sortOrder == "price-asc" {
-		sort.Sort(models.ByPrice(optional_ofs.Offers))
+		sort.Sort(models.ByPrice{Offers: optional_ofs.Offers, Asc: true})
 	} else if sortOrder == "price-desc" {
-		sort.Sort(sort.Reverse(models.ByPrice(optional_ofs.Offers)))
+		sort.Sort(models.ByPrice{Offers: optional_ofs.Offers, Asc: false})
 	}
 
 	// Calculate the starting and ending indices for pagination
