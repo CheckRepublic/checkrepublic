@@ -101,7 +101,7 @@ func (offers *Offers) FilterByPrice(minPrice *uint64, maxPrice *uint64) (ret *Of
 
 	if maxPrice != nil {
 		for _, offer := range offers.Offers {
-			if offer.Price <= *maxPrice {
+			if offer.Price < *maxPrice {
 				ret.Offers = append(ret.Offers, offer)
 			}
 		}
