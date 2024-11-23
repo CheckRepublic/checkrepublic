@@ -7,13 +7,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gofiber/fiber/v2/log"
 )
 
 type ElasticSearchDB struct {
-	es *elasticsearch.Client
+	es     *elasticsearch.Client
+	rwlock sync.RWMutex
 }
 
 func InitElasticSearch() {
@@ -67,19 +69,10 @@ func createElasticSearch() (*elasticsearch.Client, error) {
 	return es, err
 }
 
-func (e ElasticSearchDB) refreshElastic() {
-	res, err := e.es.Indices.Refresh()
-	if err != nil {
-		log.Errorf("Error refreshing index: %s", err)
-	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		log.Errorf("Error response from Elasticsearch: %s", res.String())
-	}
-}
-
 func (e ElasticSearchDB) CreateOffers(ctx context.Context, offers ...models.Offer) error {
+	e.rwlock.Lock()
+	defer e.rwlock.Unlock()
+
 	if len(offers) == 0 {
 		log.Warn("No offers provided for bulk creation")
 		return nil
@@ -139,14 +132,13 @@ func (e ElasticSearchDB) CreateOffers(ctx context.Context, offers ...models.Offe
 	}
 
 	log.Info("All offers have been successfully created")
-	e.refreshElastic()
 
 	return nil
 }
 
 // Helper method to execute a bulk request
 func (e ElasticSearchDB) executeBulkRequest(ctx context.Context, buf bytes.Buffer) error {
-	res, err := e.es.Bulk(bytes.NewReader(buf.Bytes()), e.es.Bulk.WithContext(ctx))
+	res, err := e.es.Bulk(bytes.NewReader(buf.Bytes()), e.es.Bulk.WithContext(ctx), e.es.Bulk.WithRefresh("true"))
 	if err != nil {
 		log.Errorf("Error executing bulk operation: %s", err)
 		return err
@@ -163,6 +155,8 @@ func (e ElasticSearchDB) executeBulkRequest(ctx context.Context, buf bytes.Buffe
 }
 
 func (e ElasticSearchDB) GetAllOffers(ctx context.Context) models.Offers {
+	e.rwlock.RLock()
+	defer e.rwlock.RUnlock()
 	// Prepare the search request
 	req := map[string]interface{}{
 		"query": map[string]interface{}{
@@ -237,6 +231,9 @@ func (e ElasticSearchDB) GetFilteredOffers(
 	onlyVollkasko *bool,
 	minFreeKilometer *uint64,
 ) models.DTO {
+	e.rwlock.RLock()
+	defer e.rwlock.RUnlock()
+
 	// Build the base query for mandatory filters
 	baseQuery := map[string]interface{}{
 		"bool": map[string]interface{}{
@@ -510,6 +507,8 @@ func (e ElasticSearchDB) GetFilteredOffers(
 }
 
 func (e ElasticSearchDB) DeleteAllOffers(ctx context.Context) error {
+	e.rwlock.Lock()
+	defer e.rwlock.Unlock()
 	// Prepare the query to match all documents
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
@@ -529,6 +528,7 @@ func (e ElasticSearchDB) DeleteAllOffers(ctx context.Context) error {
 		[]string{"offers"},
 		bytes.NewReader(queryBody),
 		e.es.DeleteByQuery.WithContext(ctx),
+		e.es.DeleteByQuery.WithRefresh(true),
 	)
 	if err != nil {
 		log.Errorf("Error executing delete by query: %s", err)
@@ -543,6 +543,5 @@ func (e ElasticSearchDB) DeleteAllOffers(ctx context.Context) error {
 	}
 
 	log.Info("All offers deleted successfully")
-	e.refreshElastic()
 	return nil
 }
