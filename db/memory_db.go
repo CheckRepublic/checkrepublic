@@ -62,12 +62,38 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 	onlyVollkaskoCount := models.VollkaskoCount{}
 	seatsCount := models.SeatsCount{}
 
-	pricesRange := models.BucketizeOffersByPrice(required_ofs.Offers, priceRangeWidth)
-	freeKilometerRange := models.BucketizeOffersByKilometer(required_ofs.Offers, minFreeKilometerWidth)
+	pricesRange := models.BucketizeOffersByPrice(required_ofs.
+		FilterByMinSeats(minNumberSeats).
+		FilterByCarType(carType).
+		FilterByVollkasko(onlyVollkasko).
+		FilterByMinFreeKm(minFreeKilometer).Offers, priceRangeWidth)
+	freeKilometerRange := models.BucketizeOffersByKilometer(required_ofs.
+		FilterByMinSeats(minNumberSeats).
+		FilterByPrice(minPrice, maxPrice).
+		FilterByCarType(carType).
+		FilterByVollkasko(onlyVollkasko).Offers, minFreeKilometerWidth)
 
-	for _, offer := range required_ofs.Offers {
+	for _, offer := range required_ofs.
+		FilterByMinSeats(minNumberSeats).
+		FilterByPrice(minPrice, maxPrice).
+		FilterByVollkasko(onlyVollkasko).
+		FilterByMinFreeKm(minFreeKilometer).Offers {
 		carTypeCount.Add(offer.CarType)
+	}
+
+	for _, offer := range required_ofs.
+		FilterByMinSeats(minNumberSeats).
+		FilterByPrice(minPrice, maxPrice).
+		FilterByCarType(carType).
+		FilterByMinFreeKm(minFreeKilometer).Offers {
 		onlyVollkaskoCount.Add(offer.HasVollkasko)
+	}
+
+	for _, offer := range required_ofs.
+		FilterByPrice(minPrice, maxPrice).
+		FilterByCarType(carType).
+		FilterByVollkasko(onlyVollkasko).
+		FilterByMinFreeKm(minFreeKilometer).Offers {
 		seatsCount.Add(offer.NumberSeats)
 	}
 
