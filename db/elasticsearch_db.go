@@ -234,6 +234,35 @@ func (e ElasticSearchDB) GetFilteredOffers(
 		},
 	}
 
+	// Add a script to calculate the number of full days the car is available in the range
+	// Precompute the required overlap in milliseconds
+	requiredOverlapMillis := numberDays * 24 * 60 * 60 * 1000
+
+	baseQuery["bool"].(map[string]interface{})["filter"] = append(
+		baseQuery["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
+		map[string]interface{}{
+			"script": map[string]interface{}{
+				"script": map[string]interface{}{
+					"source": `
+					long carStart = doc['startDate'].value.toInstant().toEpochMilli();
+					long carEnd = doc['endDate'].value.toInstant().toEpochMilli();
+
+					double actualStart = Math.max(carStart, params.rangeStart);
+					double actualEnd = Math.min(carEnd, params.rangeEnd);
+
+					double overlapMillis = Math.max(0, actualEnd - actualStart);
+					return overlapMillis >= params.requiredOverlapMillis;
+				`,
+					"params": map[string]interface{}{
+						"rangeStart":            timeRangeStart,
+						"rangeEnd":              timeRangeEnd,
+						"requiredOverlapMillis": requiredOverlapMillis,
+					},
+				},
+			},
+		},
+	)
+
 	// Optional Filters
 	optionalFilters := []map[string]interface{}{}
 	if minPrice != nil || maxPrice != nil {
