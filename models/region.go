@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
 )
@@ -13,7 +12,7 @@ type Region struct {
 	SubRegions []Region `json:"subRegions"`
 }
 
-var RegionTree Region = readRegions("regions.json")
+var RegionTree Region = readRegions("./models/regions.json")
 
 func (region *Region) GetRegionById(id uint64) *Region {
 	if region.Id == id {
@@ -42,13 +41,7 @@ func (region *Region) GetLeafs() []Region {
 }
 
 func readRegions(filePath string) Region {
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Fatalf("failed to open file: %v", err)
-	}
-	defer file.Close()
-
-	byteValue, err := ioutil.ReadAll(file)
+	byteValue, err := os.ReadFile(filePath)
 	if err != nil {
 		log.Fatalf("failed to read file: %v", err)
 	}

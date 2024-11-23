@@ -9,13 +9,16 @@ const (
 	Family
 )
 
-var carTypeName = map[CarType]string{
+var CarTypeName = map[CarType]string{
     Small:      "small",
     Sports: "sports",
     Luxury:     "luxury",
     Family:  "family",
 }
 
-func (carType CarType) String() string {
-    return carTypeName[carType]
+var CarTypeValue = map[string]CarType{
+    "small":      Small,
+    "sports": Sports,
+    "luxury":     Luxury,
+    "family":  Family,
 }
