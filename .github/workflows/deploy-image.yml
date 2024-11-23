@@ -12,6 +12,7 @@ jobs:
     name: Deploy Docker Image
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Docker login
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -61,3 +62,15 @@ jobs:
           proxy_key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
           source: docker-compose.yml
           target: ~/docker-compose.yml
+
+      - name: Stop docker containers
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ vars.VM_HOST }}
+          username: ${{ vars.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          proxy_host: ${{ vars.DEPLOYMENT_GATEWAY_HOST }}
+          proxy_username: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
+          proxy_key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            docker compose up -d
