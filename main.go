@@ -64,7 +64,7 @@ func printHandler(c *fiber.Ctx) error {
 	body := c.Body()
 
 	// Create a timestamped filename
-	timestamp := time.Now().Format("20060102_150405")
+	timestamp := time.Now()
 	filename := fmt.Sprintf("request_%s_%s.txt", queryMethod, timestamp)
 
 	// Create the content to be written to the file
