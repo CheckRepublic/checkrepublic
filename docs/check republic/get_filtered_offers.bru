@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: http://localhost:3000/api/offers?regionID=0&timeRangeStart=0&timeRangeEnd=8732449600000&numberDays=1&sortOrder=price-asc&page=1&pageSize=5&priceRangeWidth=5000&minFreeKilometerWidth=100
+  url: http://localhost:3000/api/offers?regionID=0&timeRangeStart=0&timeRangeEnd=8732449600000&numberDays=1&sortOrder=price-asc&page=0&pageSize=5&priceRangeWidth=5000&minFreeKilometerWidth=100
   body: none
   auth: none
 }
@@ -16,9 +16,8 @@ params:query {
   timeRangeEnd: 8732449600000
   numberDays: 1
   sortOrder: price-asc
-  page: 1
+  page: 0
   pageSize: 5
   priceRangeWidth: 5000
   minFreeKilometerWidth: 100
-  ~minNumberSeats: 5
 }

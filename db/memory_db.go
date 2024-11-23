@@ -78,13 +78,26 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 		sort.Sort(sort.Reverse(models.ByPrice(optional_ofs.Offers)))
 	}
 
-	pageStart := (page - 1) * pageSize
-	pageEnd := page * pageSize
-	if pageEnd > uint64(len(optional_ofs.Offers)) {
-		pageEnd = uint64(len(optional_ofs.Offers))
+	// Calculate the starting and ending indices for pagination
+	log.Debug("Page: ", page)
+	log.Debug("PageSize: ", pageSize)
+	startIndex := page * pageSize
+	endIndex := startIndex + pageSize
+
+	// Ensure indices are within bounds
+	if startIndex > uint64(len(optional_ofs.Offers)) {
+		startIndex = uint64(len(optional_ofs.Offers))
 	}
+	if endIndex > uint64(len(optional_ofs.Offers)) {
+		endIndex = uint64(len(optional_ofs.Offers))
+	}
+
+	log.Debug("Length of offers: ", len(optional_ofs.Offers))
+	// Slice the offers list for pagination
+	paginatedOffers := optional_ofs.Offers[startIndex:endIndex]
+
 	var dto_offers []*models.OfferDTO
-	for _, offer := range optional_ofs.Offers[pageStart:pageEnd] {
+	for _, offer := range paginatedOffers {
 		dto_offers = append(dto_offers, &models.OfferDTO{
 			ID:   offer.ID.String(),
 			Data: offer.Data,
