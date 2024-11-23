@@ -81,7 +81,7 @@ func (offers *Offers) FilterByMinSeats(numSeats *uint64) (ret *Offers) {
 		}
 	}
 
-	return offers
+	return ret
 }
 
 func (offers *Offers) FilterByPrice(minPrice *uint64, maxPrice *uint64) (ret *Offers) {
