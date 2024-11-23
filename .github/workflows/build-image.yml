@@ -54,9 +54,10 @@ jobs:
           push: true
 
       - name: DEBUG - Output tags
-        run: echo "tags=${{ steps.meta.outputs.tags }}"
+        run: |
+          echo "image_tag=$(echo ${{ steps.meta.outputs.tags }} | head -n 1)"
 
       - id: output-tag
         run: |
-            echo "image_tag=$(echo ${{ steps.meta.outputs.tags }} | head -n 1)" >> $GITHUB_OUTPUT
+          echo "image_tag=$(echo ${{ steps.meta.outputs.tags }} | head -n 1)" >> $GITHUB_OUTPUTcut -d ',' -f
 

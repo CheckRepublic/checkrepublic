@@ -12,6 +12,10 @@ jobs:
     name: Deploy Docker Image
     runs-on: ubuntu-latest
     steps:
+      - name: DEBUG - Output tags
+        run: |
+          echo "image_tag=${{ inputs.image_tag }}"
+
       - name: SSH to VM and Execute Docker
         uses: appleboy/ssh-action@v1.0.3
         with:
