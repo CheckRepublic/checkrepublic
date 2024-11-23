@@ -67,5 +67,19 @@ jobs:
           script: |
             export CR_PAT=${{ secrets.PULL_ACCESS_TOKEN }}
             echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
-            docker pull ${{ needs.build.outputs.tags }}
-            docker run -d ${{ needs.build.outputs.tags }}
+
+            # Stop and remove the previous container if it exists
+            CONTAINER_NAME="check_republic"
+            if [ $(docker ps -q -f name=$CONTAINER_NAME) ]; then
+              echo "Stopping and removing the existing container..."
+              docker stop $CONTAINER_NAME
+              docker rm $CONTAINER_NAME
+            fi
+
+            TAG=$(echo "${{ needs.build.outputs.tags }}" | cut -d ',' -f 1)
+
+            echo "Pulling the latest image..."
+            docker pull $TAG
+            
+            echo "Starting a new container..."
+            docker run -d --name $CONTAINER_NAME -p 80:80 $TAG
