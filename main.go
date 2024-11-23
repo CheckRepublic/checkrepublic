@@ -43,91 +43,66 @@ func postHandler(c *fiber.Ctx) error {
 }
 
 func getHandler(c *fiber.Ctx) error {
-	regionIDParam := c.Query("regionID")
-	if regionIDParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("regionID is required")
-	}
-	regionID := strconv.ParseUint(regionIDParam, 10, 64)
+  //log the request
+    log.Println(c.Queries())
 
-	timeRangeStartParam := c.Query("timeRangeStart")
-	if timeRangeStartParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("timeRangeStart is required")
-	}
-	timeRangeStart := strconv.ParseUint(timeRangeStartParam, 10, 64)
+	regionID := c.Query("regionID")
+    if regionID == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("regionID is required")
+    }
 
-	timeRangeEndParam := c.Query("timeRangeEnd")
-	if timeRangeEndParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("timeRangeEnd is required")
-	}
-	timeRangeEnd := strconv.ParseUint(timeRangeEndParam, 10, 64)
+    timeRangeStart := c.Query("timeRangeStart")
+    if timeRangeStart == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("timeRangeStart is required")
+    }
 
-	numberDaysParam := c.Query("numberDays")
-	if numberDaysParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("numberDays is required")
-	}
-	numberDays := strconv.ParseUint(numberDaysParam, 10, 64)
+    timeRangeEnd := c.Query("timeRangeEnd")
+    if timeRangeEnd == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("timeRangeEnd is required")
+    }
 
-	sortOrderParam := c.Query("sortOrder")
-	if sortOrderParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("sortOrder is required")
-	}
+    numberDays := c.Query("numberDays")
+    if numberDays == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("numberDays is required")
+    }
 
-	pageParam := c.Query("page")
-	if pageParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("page is required")
-	}
-	page := strconv.ParseUint(pageParam, 10, 64)
+    sortOrder := c.Query("sortOrder")
+    if sortOrder == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("sortOrder is required")
+    }
 
-	pageSizeParam := c.Query("pageSize")
-	if pageSizeParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("pageSize is required")
-	}
-	pageSize := strconv.ParseUint(pageSizeParam, 10, 64)
+    page := c.Query("page")
+    if page == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("page is required")
+    }
 
-	priceRangeWidthParam := c.Query("priceRangeWidth")
-	if priceRangeWidthParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("priceRangeWidth is required")
-	}
-	priceRangeWidth := strconv.ParseUint(priceRangeWidthParam, 10, 64)
+    pageSize := c.Query("pageSize")
+    if pageSize == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("pageSize is required")
+    }
 
-	minFreeKilometerWidthParam := c.Query("minFreeKilometerWidth")
-	if minFreeKilometerWidthParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("minFreeKilometerWidth is required")
-	}
-	minFreeKilometerWidth := strconv.ParseUint(minFreeKilometerWidthParam, 10, 64)
+    priceRangeWidth := c.Query("priceRangeWidth")
+    if priceRangeWidth == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("priceRangeWidth is required")
+    }
 
-	minNumberSeatsParam := c.Query("minNumberSeats")
-	minNumberSeats := strconv.ParseUint(minNumberSeatsParam, 10, 64)
+    minFreeKilometerWidth := c.Query("minFreeKilometerWidth")
+    if minFreeKilometerWidth == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("minFreeKilometerWidth is required")
+    }
 
-	minPriceParam := c.Query("minPrice")
-	minPrice = strconv.ParseUint(minPriceParam, 10, 64)
+    minNumberSeats := c.Query("minNumberSeats")
+    minNumberSeats = minNumberSeats
+    minPrice := c.Query("minPrice")
+    minPrice = minPrice
+    maxPrice := c.Query("maxPrice")
+    maxPrice = maxPrice
+    carType := c.Query("carType")
+    carType = carType
+    onlyVollkasko := c.Query("onlyVollkasko")
+    onlyVollkasko = onlyVollkasko
+    minFreeKilometer := c.Query("minFreeKilometer")
+    minFreeKilometer = minFreeKilometer
 
-	maxPriceParam := c.Query("maxPrice")
-	maxPrice = strconv.ParseUint(maxPriceParam, 10, 64)
-
-	carTypeParam := c.Query("carType")
-
-	onlyVollkaskoParam := c.Query("onlyVollkasko")
-	onlyVollkasko := strconv.ParseBool(onlyVollkaskoParam)
-
-	minFreeKilometerParam := c.Query("minFreeKilometer")
-	minFreeKilometer := strconv.ParseUint(minFreeKilometerParam, 10, 64)
-
-	offers := logic.Filter(regionID,
-		timeRangeStart,
-		timeRangeEnd,
-		numberDays,
-		sortOrder,
-		page,
-		pageSize,
-		priceRangeWidth,
-		minFreeKilometerWidth,
-		minNumberSeats,
-		minPrice,
-		maxPrice,
-		carType,
-		onlyVollkasko,
-		minFreeKilometer)
-
-	return c.JSON(offers)
+	return c.JSON(GetAllOffers())
 }
