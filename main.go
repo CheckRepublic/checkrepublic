@@ -44,5 +44,63 @@ func postHandler(c *fiber.Ctx) error {
 }
 
 func getHandler(c *fiber.Ctx) error {
+	regionID := c.Query("regionID")
+    if regionID == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("regionID is required")
+    }
+
+    timeRangeStart := c.Query("timeRangeStart")
+    if timeRangeStart == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("timeRangeStart is required")
+    }
+
+    timeRangeEnd := c.Query("timeRangeEnd")
+    if timeRangeEnd == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("timeRangeEnd is required")
+    }
+
+    numberDays := c.Query("numberDays")
+    if numberDays == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("numberDays is required")
+    }
+
+    sortOrder := c.Query("sortOrder")
+    if sortOrder == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("sortOrder is required")
+    }
+
+    page := c.Query("page")
+    if page == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("page is required")
+    }
+
+    pageSize := c.Query("pageSize")
+    if pageSize == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("pageSize is required")
+    }
+
+    priceRangeWidth := c.Query("priceRangeWidth")
+    if priceRangeWidth == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("priceRangeWidth is required")
+    }
+
+    minFreeKilometerWidth := c.Query("minFreeKilometerWidth")
+    if minFreeKilometerWidth == "" {
+        return c.Status(fiber.StatusBadRequest).SendString("minFreeKilometerWidth is required")
+    }
+
+    minNumberSeats := c.Query("minNumberSeats")
+    minNumberSeats = minNumberSeats
+    minPrice := c.Query("minPrice")
+    minPrice = minPrice
+    maxPrice := c.Query("maxPrice")
+    maxPrice = maxPrice
+    carType := c.Query("carType")
+    carType = carType
+    onlyVollkasko := c.Query("onlyVollkasko")
+    onlyVollkasko = onlyVollkasko
+    minFreeKilometer := c.Query("minFreeKilometer")
+    minFreeKilometer = minFreeKilometer
+
 	return c.JSON(GetAllOffers())
 }
