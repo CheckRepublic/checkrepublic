@@ -55,5 +55,6 @@ jobs:
 
       - id: output-tag
         run: |
-          echo "image_tag=${{ steps.meta.outputs.tags[0] }}" >> $GITHUB_OUTPUT
+          first_tag=$(echo "${{ steps.meta.outputs.tags }}" | cut -d ',' -f 1)
+          echo "image_tag=$first_tag" >> $GITHUB_OUTPUT
 
