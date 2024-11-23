@@ -33,7 +33,7 @@ jobs:
               docker rm $CONTAINER_NAME
             fi
 
-            TAG="ghcr.io/${{ github.repository }}/checkrepublic:${{ inputs.version }}"
+            TAG="ghcr.io/checkrepublic/checkrepublic:${{ inputs.version }}"
             echo "Pulling the latest image..."
             docker pull $TAG
             
