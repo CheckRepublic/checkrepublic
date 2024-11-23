@@ -20,7 +20,7 @@ func Filter(regionID uint64,
 	carType *models.CarType,
 	onlyVollkasko *bool,
 	minFreeKilometer *uint64) (offers models.Offers) {
-	offers = db.GetAllOffers()
+	offers = db.DB.GetAllOffers()
 	offers = *offers.FilterByRegion(regionID).FilterByTimeRange(timeRangeStart, timeRangeEnd).FilterByNumberDays(numberDays).FilterByMinSeats(minNumberSeats).FilterByPrice(minPrice, maxPrice).FilterByCarType(carType).FilterByVollkasko(onlyVollkasko).FilterByMinFreeKm(minFreeKilometer)
 
 	return offers

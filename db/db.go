@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/go-memdb"
 )
 
-var Db *memdb.MemDB
+var DB OfferDatabase
 
 type OfferDatabase interface {
 	CreateOffers(o ...models.Offer)
@@ -18,14 +18,13 @@ type MemDB struct {
 	Db *memdb.MemDB
 }
 
-func Init() *MemDB {
+func Init() {
 	db, err := createDB()
 	if err != nil {
 		log.Fatal(err)
 	}
-	Db = db
+	DB = MemDB{Db: db}
 	log.Info("Database created")
-	return &MemDB{Db: db}
 }
 
 func createDB() (*memdb.MemDB, error) {
