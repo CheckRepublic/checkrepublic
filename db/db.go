@@ -9,13 +9,23 @@ import (
 
 var Db *memdb.MemDB
 
-func Init() {
+type OfferDatabase interface {
+	CreateOffers(o ...models.Offer)
+	GetAllOffers() models.Offers
+}
+
+type MemDB struct {
+	Db *memdb.MemDB
+}
+
+func Init() *MemDB {
 	db, err := createDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 	Db = db
 	log.Info("Database created")
+	return &MemDB{Db: db}
 }
 
 func createDB() (*memdb.MemDB, error) {
@@ -39,9 +49,9 @@ func createDB() (*memdb.MemDB, error) {
 	return memdb.NewMemDB(schema)
 }
 
-func CreateOffers(o ...models.Offer) {
+func (m MemDB) CreateOffers(o ...models.Offer) {
 	// Start a new transaction for writing
-	txn := Db.Txn(true)
+	txn := m.Db.Txn(true)
 	for _, offer := range o {
 		log.Info("Inserting offer: ", offer)
 		err := txn.Insert("offer", offer)
@@ -52,8 +62,8 @@ func CreateOffers(o ...models.Offer) {
 	txn.Commit()
 }
 
-func GetAllOffers() models.Offers {
-	txn := Db.Txn(false)
+func (m MemDB) GetAllOffers() models.Offers {
+	txn := m.Db.Txn(false)
 	defer txn.Abort()
 
 	it, err := txn.Get("offer", "id")
