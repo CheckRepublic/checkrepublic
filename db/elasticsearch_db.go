@@ -213,7 +213,7 @@ func (e ElasticSearchDB) GetFilteredOffers(
 				// Mandatory Filters
 				{
 					"terms": map[string]interface{}{
-						"mostSpecificRegionID": regionIdToMostSpecificRegionId[regionID],
+						"mostSpecificRegionID": models.RegionIdToMostSpecificRegionId[int32(regionID)],
 					},
 				},
 				{

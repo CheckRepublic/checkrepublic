@@ -14,6 +14,9 @@ func main() {
 	if os.Getenv("DEBUG") == "true" {
 		log.SetLevel(log.LevelDebug)
 	}
+
+	models.InitRegions()
+
 	// db.InitPostgres()
 	db.InitElasticSearch()
 
