@@ -1,0 +1,14 @@
+services:
+  db:
+    image: 'postgres:16-alpine'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=checkrepublic
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d checkrepublic -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"

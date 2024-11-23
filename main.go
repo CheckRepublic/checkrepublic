@@ -2,24 +2,32 @@ package main
 
 import (
 	"check_republic/db"
-	"check_republic/logic"
 	"check_republic/models"
-	"log"
+	"os"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 )
 
 func main() {
-	db.Init()
+	if os.Getenv("DEBUG") == "true" {
+		log.SetLevel(log.LevelDebug)
+	}
+	db.InitPostgres()
 
 	app := fiber.New()
 
 	app.Get("/api/offers", getHandler)
+	app.Get("/api/offers/all", getAllHandler)
 	app.Post("/api/offers", postHandler)
 	app.Delete("/api/offers", deleteHandler)
 
 	log.Fatal(app.Listen(":3000"))
+}
+
+func getAllHandler(c *fiber.Ctx) error {
+	return c.JSON(db.DB.GetAllOffers(c.Context()))
 }
 
 func postHandler(c *fiber.Ctx) error {
@@ -32,7 +40,7 @@ func postHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	db.DB.CreateOffers(offer.Offers...)
+	db.DB.CreateOffers(c.Context(), offer.Offers...)
 	return c.SendString("Offer created")
 }
 
@@ -98,47 +106,48 @@ func getHandler(c *fiber.Ctx) error {
 		*minNumberSeats, _ = strconv.ParseUint(minNumberSeatsParam, 10, 64)
 	}
 
-    var minPrice *uint64
+	var minPrice *uint64
 	minPriceParam := c.Query("minPrice")
-    if minPriceParam == "" {
-        minPrice = nil
-    } else {
-        *minPrice, _ = strconv.ParseUint(minPriceParam, 10, 64)
-    }
+	if minPriceParam == "" {
+		minPrice = nil
+	} else {
+		*minPrice, _ = strconv.ParseUint(minPriceParam, 10, 64)
+	}
 
-    var maxPrice *uint64
+	var maxPrice *uint64
 	maxPriceParam := c.Query("maxPrice")
-    if maxPriceParam == "" {
-        maxPrice = nil
-    } else {
-        *maxPrice, _ = strconv.ParseUint(maxPriceParam, 10, 64)
-    }
+	if maxPriceParam == "" {
+		maxPrice = nil
+	} else {
+		*maxPrice, _ = strconv.ParseUint(maxPriceParam, 10, 64)
+	}
 
-    var carType *string
+	var carType *string
 	carTypeParam := c.Query("carType")
-    if carTypeParam == "" {
-        carType = nil
-    } else {
-        *carType = carTypeParam
-    }
+	if carTypeParam == "" {
+		carType = nil
+	} else {
+		*carType = carTypeParam
+	}
 
-    var onlyVollkasko *bool
+	var onlyVollkasko *bool
 	onlyVollkaskoParam := c.Query("onlyVollkasko")
-    if onlyVollkaskoParam == "" {
-        onlyVollkasko = nil
-    } else {
-        *onlyVollkasko, _ = strconv.ParseBool(onlyVollkaskoParam)
-    }
+	if onlyVollkaskoParam == "" {
+		onlyVollkasko = nil
+	} else {
+		*onlyVollkasko, _ = strconv.ParseBool(onlyVollkaskoParam)
+	}
 
-    var minFreeKilometer *uint64
+	var minFreeKilometer *uint64
 	minFreeKilometerParam := c.Query("minFreeKilometer")
-    if minFreeKilometerParam == "" {
-        minFreeKilometer = nil
-    } else {
-        *minFreeKilometer, _ = strconv.ParseUint(minFreeKilometerParam, 10, 64)
-    }
+	if minFreeKilometerParam == "" {
+		minFreeKilometer = nil
+	} else {
+		*minFreeKilometer, _ = strconv.ParseUint(minFreeKilometerParam, 10, 64)
+	}
 
-	offersWithCounts := logic.Filter(regionID,
+	offers := db.DB.GetFilteredOffers(c.Context(),
+		regionID,
 		timeRangeStart,
 		timeRangeEnd,
 		numberDays,
@@ -154,10 +163,10 @@ func getHandler(c *fiber.Ctx) error {
 		onlyVollkasko,
 		minFreeKilometer)
 
-	return c.JSON(offersWithCounts)
+	return c.JSON(offers)
 }
 
 func deleteHandler(c *fiber.Ctx) error {
-	db.DB.DeleteAllOffers()
-    return c.SendString("All offers deleted")
+	db.DB.DeleteAllOffers(c.Context())
+	return c.SendString("All offers deleted")
 }
