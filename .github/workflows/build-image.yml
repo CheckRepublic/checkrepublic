@@ -1,8 +1,11 @@
 name: Build, Push, and Deploy Docker Image
 
 on:
-  push:
-    branches: [main]
+  workflow_call:
+    outputs:
+      image_tag: 
+        description: "The tag of the image that was built"
+        value: ${{ jobs.build.outputs.image_tag }}
 
 jobs:
   build:
@@ -50,36 +53,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           push: true
 
-  deploy:
-    name: Deploy Docker Image
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: SSH to VM and Execute Docker
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ vars.VM_HOST }}
-          username: ${{ vars.VM_USERNAME }}
-          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
-          proxy_host: ${{ vars.DEPLOYMENT_GATEWAY_HOST }}
-          proxy_username: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
-          proxy_key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
-          script: |
-            export CR_PAT=${{ secrets.PULL_ACCESS_TOKEN }}
-            echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
-
-            # Stop and remove the previous container if it exists
-            CONTAINER_NAME="check_republic"
-            if [ $(docker ps -q -f name=$CONTAINER_NAME) ]; then
-              echo "Stopping and removing the existing container..."
-              docker stop $CONTAINER_NAME
-              docker rm $CONTAINER_NAME
-            fi
-
-            TAG=$(echo "${{ needs.build.outputs.tags }}" | cut -d ',' -f 1)
-
-            echo "Pulling the latest image..."
-            docker pull $TAG
-            
-            echo "Starting a new container..."
-            docker run -d --name $CONTAINER_NAME -p 80:80 $TAG
+      - id: output-tag
+        run: |
+          echo "image_tag=$(echo 'ghcr.io/checkrepublic/checkrepublic:pr-2' | cut -d ',' -f 1)" >> "$GITHUB_OUTPUT"
