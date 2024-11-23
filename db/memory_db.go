@@ -45,13 +45,13 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 	defer m.rwlock.RUnlock()
 
 	ofs := &models.Offers{Offers: m.db}
-	ofs = ofs.
+	required_ofs := ofs.
 		FilterByRegion(regionID).
 		FilterByTimeRange(timeRangeStart, timeRangeEnd).
 		FilterByNumberDays(numberDays)
 
 	// Optional filters
-	optional_ofs := ofs.
+	optional_ofs := required_ofs.
 		FilterByMinSeats(minNumberSeats).
 		FilterByPrice(minPrice, maxPrice).
 		FilterByCarType(carType).
@@ -62,10 +62,10 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 	onlyVollkaskoCount := models.VollkaskoCount{}
 	seatsCount := models.SeatsCount{}
 
-	pricesRange := models.BucketizeOffersByPrice(optional_ofs.Offers, priceRangeWidth)
-	freeKilometerRange := models.BucketizeOffersByKilometer(optional_ofs.Offers, minFreeKilometerWidth)
+	pricesRange := models.BucketizeOffersByPrice(required_ofs.Offers, priceRangeWidth)
+	freeKilometerRange := models.BucketizeOffersByKilometer(required_ofs.Offers, minFreeKilometerWidth)
 
-	for _, offer := range optional_ofs.Offers {
+	for _, offer := range required_ofs.Offers {
 		carTypeCount.Add(offer.CarType)
 		onlyVollkaskoCount.Add(offer.HasVollkasko)
 		seatsCount.Add(offer.NumberSeats)
