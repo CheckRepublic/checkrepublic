@@ -439,6 +439,11 @@ func (e ElasticSearchDB) GetFilteredOffers(
 				"order": sortDirection,
 			},
 		},
+		{
+			"ID": map[string]interface{}{
+				"order": "asc",
+			},
+		},
 	}
 	from := (page) * pageSize
 
