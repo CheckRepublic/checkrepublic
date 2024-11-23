@@ -55,4 +55,4 @@ jobs:
 
       - id: output-tag
         run: |
-          $(echo "${{ steps.meta.outputs.tags }}" | cut -d ',' -f 1) >> "$GITHUB_OUTPUT"
+          echo "image_tag=$(echo 'ghcr.io/checkrepublic/checkrepublic:pr-2' | cut -d ',' -f 1)" >> "$GITHUB_OUTPUT"
