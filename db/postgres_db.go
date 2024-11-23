@@ -132,7 +132,7 @@ func buildBaseQuery() string {
 	WHERE region_id = ANY($1)  -- Match the region or any of its subregions
 	AND start_date >= $2 
 	AND end_date <= $3
-	AND (end_date - start_date) >= ($4 * 86400000)  -- The number of full days (24h) the car is available within the rangeStart and rangeEnd
+	AND (end_date - start_date) >= ($4 * 24 * 60 * 60 * 1000)  -- The number of full days (24h) the car is available within the rangeStart and rangeEnd
 	`
 }
 
@@ -231,7 +231,7 @@ func (p PostgresDB) GetFilteredOffers(ctx context.Context, regionID uint64, time
 	validRegionIds := models.RegionIdToMostSpecificRegionId[int32(regionID)]
 	log.Infof("Valid region ids: %v", validRegionIds)
 
-	offset := (page - 1) * pageSize
+	offset := page * pageSize
 
 	// Query execution
 	rows, err := p.Db.Query(ctx, orderedAndPaginated(baseQuery, parseSortOrder(sortOrder)),
