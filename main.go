@@ -22,7 +22,7 @@ func main() {
 	app.Post("/api/offers", postHandler)
 	app.Delete("/api/offers", helloHandler)
 
-	log.Fatal(app.Listen(":3000"))
+	log.Fatal(app.Listen(":80"))
 }
 
 func helloHandler(c *fiber.Ctx) error {
