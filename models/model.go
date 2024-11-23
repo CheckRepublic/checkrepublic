@@ -10,9 +10,14 @@ type Offers struct {
 
 type ByPrice []*Offer
 
-func (a ByPrice) Len() int           { return len(a) }
-func (a ByPrice) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByPrice) Less(i, j int) bool { return a[i].Price < a[j].Price }
+func (a ByPrice) Len() int      { return len(a) }
+func (a ByPrice) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByPrice) Less(i, j int) bool {
+	if a[i].Price == a[j].Price {
+		return a[i].ID.String() < a[j].ID.String()
+	}
+	return a[i].Price < a[j].Price
+}
 
 // Offer represents the offer details.
 type Offer struct {
