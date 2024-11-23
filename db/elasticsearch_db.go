@@ -206,41 +206,36 @@ func (e ElasticSearchDB) GetFilteredOffers(
 	onlyVollkasko *bool,
 	minFreeKilometer *uint64,
 ) models.DTO {
-	// Build the query
-	query := map[string]interface{}{
+	// Build the base query for mandatory filters
+	baseQuery := map[string]interface{}{
 		"bool": map[string]interface{}{
-			"must":   []map[string]interface{}{},
-			"filter": []map[string]interface{}{},
+			"filter": []map[string]interface{}{
+				// Mandatory Filters
+				{
+					"terms": map[string]interface{}{
+						"mostSpecificRegionID": regionIdToMostSpecificRegionId[regionID],
+					},
+				},
+				{
+					"range": map[string]interface{}{
+						"startDate": map[string]interface{}{
+							"gte": timeRangeStart,
+						},
+					},
+				},
+				{
+					"range": map[string]interface{}{
+						"endDate": map[string]interface{}{
+							"lte": timeRangeEnd,
+						},
+					},
+				},
+			},
 		},
 	}
 
-	regionIDs := regionIdToMostSpecificRegionId[regionID]
-	log.Debug(regionIDs)
-
-	// Add filters for the query
-	query["bool"].(map[string]interface{})["filter"] = append(
-		query["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
-		map[string]interface{}{
-			"terms": map[string]interface{}{
-				"mostSpecificRegionID": regionIDs,
-			},
-		},
-		map[string]interface{}{
-			"range": map[string]interface{}{
-				"startDate": map[string]interface{}{
-					"gte": timeRangeStart,
-				},
-			},
-		},
-		map[string]interface{}{
-			"range": map[string]interface{}{
-				"endDate": map[string]interface{}{
-					"lte": timeRangeEnd,
-				},
-			},
-		},
-	)
-
+	// Optional Filters
+	optionalFilters := []map[string]interface{}{}
 	if minPrice != nil || maxPrice != nil {
 		priceRange := map[string]interface{}{}
 		if minPrice != nil {
@@ -249,91 +244,50 @@ func (e ElasticSearchDB) GetFilteredOffers(
 		if maxPrice != nil {
 			priceRange["lte"] = *maxPrice
 		}
-		query["bool"].(map[string]interface{})["filter"] = append(
-			query["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
-			map[string]interface{}{
-				"range": map[string]interface{}{
-					"price": priceRange,
-				},
+		optionalFilters = append(optionalFilters, map[string]interface{}{
+			"range": map[string]interface{}{
+				"price": priceRange,
 			},
-		)
+		})
 	}
 
 	if minFreeKilometer != nil {
-		query["bool"].(map[string]interface{})["filter"] = append(
-			query["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
-			map[string]interface{}{
-				"range": map[string]interface{}{
-					"freeKilometers": map[string]interface{}{
-						"gte": *minFreeKilometer,
-					},
+		optionalFilters = append(optionalFilters, map[string]interface{}{
+			"range": map[string]interface{}{
+				"freeKilometers": map[string]interface{}{
+					"gte": *minFreeKilometer,
 				},
 			},
-		)
+		})
 	}
 
 	if minNumberSeats != nil {
-		query["bool"].(map[string]interface{})["filter"] = append(
-			query["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
-			map[string]interface{}{
-				"range": map[string]interface{}{
-					"numberSeats": map[string]interface{}{
-						"gte": *minNumberSeats,
-					},
+		optionalFilters = append(optionalFilters, map[string]interface{}{
+			"range": map[string]interface{}{
+				"numberSeats": map[string]interface{}{
+					"gte": *minNumberSeats,
 				},
 			},
-		)
+		})
 	}
 
 	if carType != nil {
-		query["bool"].(map[string]interface{})["filter"] = append(
-			query["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
-			map[string]interface{}{
-				"term": map[string]interface{}{
-					"carType": *carType,
-				},
+		optionalFilters = append(optionalFilters, map[string]interface{}{
+			"term": map[string]interface{}{
+				"carType": *carType,
 			},
-		)
+		})
 	}
 
 	if onlyVollkasko != nil && *onlyVollkasko {
-		query["bool"].(map[string]interface{})["filter"] = append(
-			query["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
-			map[string]interface{}{
-				"term": map[string]interface{}{
-					"hasVollkasko": true,
-				},
+		optionalFilters = append(optionalFilters, map[string]interface{}{
+			"term": map[string]interface{}{
+				"hasVollkasko": true,
 			},
-		)
+		})
 	}
 
-	// Sort and pagination
-	sortField := "price"
-	sortDirection := "asc"
-	if sortOrder != "" {
-		parts := strings.Split(sortOrder, "-")
-		if len(parts) == 2 {
-			sortField = parts[0]
-			sortDirection = parts[1]
-		}
-	}
-	sort := []map[string]interface{}{
-		{
-			sortField: map[string]interface{}{
-				"order": sortDirection,
-			},
-		},
-	}
-	from := (page - 1) * pageSize
-
-	if priceRangeWidth <= 0 {
-		priceRangeWidth = 1
-	}
-	if minFreeKilometerWidth <= 0 {
-		minFreeKilometerWidth = 1
-	}
-
-	// Aggregations
+	// Aggregations based on mandatory filters only
 	aggregations := map[string]interface{}{
 		"price_ranges": map[string]interface{}{
 			"histogram": map[string]interface{}{
@@ -364,64 +318,123 @@ func (e ElasticSearchDB) GetFilteredOffers(
 		},
 	}
 
-	// Construct the request body
-	reqBody := map[string]interface{}{
-		"query": query,
-		"from":  from,
-		"size":  pageSize,
-		"sort":  sort,
+	// Construct the query to include mandatory filters and aggregations
+	baseRequestBody := map[string]interface{}{
+		"query": baseQuery,
+		"size":  0, // Aggregations only
 		"aggs":  aggregations,
 	}
 
-	// Execute the search request
-	reqJSON, err := json.Marshal(reqBody)
+	// Execute base aggregation query
+	baseRequestJSON, err := json.Marshal(baseRequestBody)
 	if err != nil {
-		log.Errorf("Error marshalling search request: %s", err)
+		log.Errorf("Error marshalling base aggregation request: %s", err)
 		return models.DTO{}
 	}
 
-	res, err := e.es.Search(
+	baseRes, err := e.es.Search(
 		e.es.Search.WithContext(ctx),
 		e.es.Search.WithIndex("offers"),
-		e.es.Search.WithBody(bytes.NewReader(reqJSON)),
+		e.es.Search.WithBody(bytes.NewReader(baseRequestJSON)),
 	)
 	if err != nil {
-		log.Errorf("Error executing search: %s", err)
+		log.Errorf("Error executing base aggregation query: %s", err)
 		return models.DTO{}
 	}
-	defer res.Body.Close()
+	defer baseRes.Body.Close()
 
-	if res.IsError() {
-		log.Errorf("Search response error: %s", res.String())
+	// Check for errors in the response
+	if baseRes.IsError() {
+		log.Errorf("Base aggregation query response error: %s", baseRes.String())
 		return models.DTO{}
 	}
 
-	// Parse the response
-	var searchResult struct {
+	// Parse base aggregation results
+	var baseAggResult struct {
+		Aggregations map[string]interface{} `json:"aggregations"`
+	}
+	if err := json.NewDecoder(baseRes.Body).Decode(&baseAggResult); err != nil {
+		log.Errorf("Error parsing base aggregation response: %s", err)
+		return models.DTO{}
+	}
+
+	// Add optional filters for final query
+	finalQuery := map[string]interface{}{
+		"bool": map[string]interface{}{
+			"filter": append(baseQuery["bool"].(map[string]interface{})["filter"].([]map[string]interface{}), optionalFilters...),
+		},
+	}
+
+	// Sorting and pagination
+	sortField := "price"
+	sortDirection := "asc"
+	if sortOrder != "" {
+		parts := strings.Split(sortOrder, "-")
+		if len(parts) == 2 {
+			sortField = parts[0]
+			sortDirection = parts[1]
+		}
+	}
+	sort := []map[string]interface{}{
+		{
+			sortField: map[string]interface{}{
+				"order": sortDirection,
+			},
+		},
+	}
+	from := (page - 1) * pageSize
+
+	// Final query request body
+	finalRequestBody := map[string]interface{}{
+		"query": finalQuery,
+		"from":  from,
+		"size":  pageSize,
+		"sort":  sort,
+	}
+
+	// Execute final query for results
+	finalRequestJSON, err := json.Marshal(finalRequestBody)
+	if err != nil {
+		log.Errorf("Error marshalling final request: %s", err)
+		return models.DTO{}
+	}
+
+	finalRes, err := e.es.Search(
+		e.es.Search.WithContext(ctx),
+		e.es.Search.WithIndex("offers"),
+		e.es.Search.WithBody(bytes.NewReader(finalRequestJSON)),
+	)
+	if err != nil {
+		log.Errorf("Error executing final query: %s", err)
+		return models.DTO{}
+	}
+	defer finalRes.Body.Close()
+
+	// Parse final query results
+	var finalQueryResult struct {
 		Hits struct {
 			Hits []struct {
 				Source models.Offer `json:"_source"`
 			} `json:"hits"`
 		} `json:"hits"`
-		Aggregations map[string]interface{} `json:"aggregations"`
 	}
-	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
-		log.Errorf("Error parsing search response: %s", err)
+	if err := json.NewDecoder(finalRes.Body).Decode(&finalQueryResult); err != nil {
+		log.Errorf("Error parsing final query response: %s", err)
 		return models.DTO{}
 	}
-	log.Debug("Search result", searchResult)
 
-	// Parse hits
+	// Parse final hits
 	var offers []models.Offer
-	for _, hit := range searchResult.Hits.Hits {
+	for _, hit := range finalQueryResult.Hits.Hits {
 		offers = append(offers, hit.Source)
 	}
 
-	priceRanges := parseHistogramBuckets(searchResult.Aggregations["price_ranges"], priceRangeWidth)
-	carTypeCounts := parseCarTypeCounts(searchResult.Aggregations["car_type_counts"])
-	seatsCount := parseSeatsCount(searchResult.Aggregations["seats_count"])
-	freeKilometerRange := parseHistogramBuckets(searchResult.Aggregations["free_kilometer_range"], minFreeKilometerWidth)
-	vollkaskoCount := parseVollkaskoCount(searchResult.Aggregations["vollkasko_count"])
+	// Parse aggregations
+	priceRanges := parseHistogramBuckets(baseAggResult.Aggregations["price_ranges"], priceRangeWidth)
+	carTypeCounts := parseCarTypeCounts(baseAggResult.Aggregations["car_type_counts"])
+	seatsCount := parseSeatsCount(baseAggResult.Aggregations["seats_count"])
+	freeKilometerRange := parseHistogramBuckets(baseAggResult.Aggregations["free_kilometer_range"], minFreeKilometerWidth)
+	vollkaskoCount := parseVollkaskoCount(baseAggResult.Aggregations["vollkasko_count"])
 
 	return models.DTO{
 		Offers:             offers,
