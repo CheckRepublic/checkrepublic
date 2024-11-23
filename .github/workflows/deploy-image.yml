@@ -49,7 +49,6 @@ jobs:
           proxy_key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
           script: |
             echo "TAG=${{ inputs.version }}" > ~/.env
-            docker compose pull 
 
       - name: Copy docker compose file to host 
         uses: appleboy/scp-action@v0.1.7
@@ -73,4 +72,5 @@ jobs:
           proxy_username: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
           proxy_key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
           script: |
+            docker compose pull 
             docker compose up -d
