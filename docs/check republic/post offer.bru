@@ -5,7 +5,26 @@ meta {
 }
 
 post {
-  url: /api/offers
-  body: none
+  url: http://localhost:80/api/offers
+  body: json
   auth: none
+}
+
+body:json {
+  {
+    "offers": [
+      {
+        "ID": "01934a57-7988-7879-bb9b-e03bd4e77b9d",
+        "data": "string",
+        "mostSpecificRegionID": 5,
+        "startDate": 1732104000000,
+        "endDate": 1732449600000,
+        "numberSeats": 5,
+        "price": 10000,
+        "carType": "luxury",
+        "hasVollkasko": true,
+        "freeKilometers": 120
+      }
+    ]
+  }
 }
