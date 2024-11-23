@@ -4,7 +4,6 @@ import (
 	"check_republic/db"
 	"check_republic/models"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
@@ -15,7 +14,7 @@ import (
 	_ "go.uber.org/automaxprocs"
 )
 
-var filename = ""
+var filename = time.Now().String()
 
 func main() {
 	if os.Getenv("DEBUG") == "true" {
@@ -55,23 +54,34 @@ func debugHelper(c *fiber.Ctx) {
 		filename = time.Now().String()
 	}
 }
-
 // writeGet appends the query parameters to a file
 func writeGet(queryParams map[string]string) {
 	// Create the content to be written to the file
-	content := fmt.Sprintf("Query Params: %v", queryParams)
+	content := fmt.Sprintf("Query Params: %v\n", queryParams)
 
-	// Write the content to the file
-	err := ioutil.WriteFile("result/GET_"+filename, []byte(content), 0644)
+	// Append the content to the file
+	f, err := os.OpenFile("result/GET_"+filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
+		log.Error("Error opening file")
+		return
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(content); err != nil {
 		log.Error("Error writing to file")
 	}
 }
 
 func writePost(body []byte) {
-	// Write the content to the file
-	err := ioutil.WriteFile("result/POST_"+filename, body, 0644)
+	// Append the content to the file
+	f, err := os.OpenFile("result/POST_"+filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
+		log.Error("Error opening file")
+		return
+	}
+	defer f.Close()
+
+	if _, err := f.Write(body); err != nil {
 		log.Error("Error writing to file")
 	}
 }
