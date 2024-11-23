@@ -11,6 +11,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+
+	_ "go.uber.org/automaxprocs"
 )
 
 var filename = ""

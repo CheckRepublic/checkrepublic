@@ -81,11 +81,10 @@ func (offers *Offers) FilterByNumberDays(num uint64) (ret *Offers) {
 }
 
 func (offers *Offers) FilterByMinSeats(numSeats *uint64) (ret *Offers) {
-	ret = &Offers{}
-
 	if numSeats == nil {
 		return offers
 	}
+	ret = &Offers{}
 
 	for _, offer := range offers.Offers {
 		if offer.NumberSeats >= *numSeats {
@@ -97,11 +96,10 @@ func (offers *Offers) FilterByMinSeats(numSeats *uint64) (ret *Offers) {
 }
 
 func (offers *Offers) FilterByPrice(minPrice *uint64, maxPrice *uint64) (ret *Offers) {
-	ret = &Offers{}
-
 	if minPrice == nil && maxPrice == nil {
 		return offers
 	}
+	ret = &Offers{}
 
 	for _, offer := range offers.Offers {
 		isOkay := true
@@ -117,11 +115,10 @@ func (offers *Offers) FilterByPrice(minPrice *uint64, maxPrice *uint64) (ret *Of
 }
 
 func (offers *Offers) FilterByCarType(carType *string) (ret *Offers) {
-	ret = &Offers{}
-
 	if carType == nil {
 		return offers
 	}
+	ret = &Offers{}
 
 	for _, offer := range offers.Offers {
 		if offer.CarType == *carType {
@@ -133,11 +130,10 @@ func (offers *Offers) FilterByCarType(carType *string) (ret *Offers) {
 }
 
 func (offers *Offers) FilterByVollkasko(vollKasko *bool) (ret *Offers) {
-	ret = &Offers{}
-
 	if vollKasko == nil || *vollKasko == false {
 		return offers
 	}
+	ret = &Offers{}
 
 	for _, offer := range offers.Offers {
 		if offer.HasVollkasko == *vollKasko {
@@ -149,11 +145,10 @@ func (offers *Offers) FilterByVollkasko(vollKasko *bool) (ret *Offers) {
 }
 
 func (offers *Offers) FilterByMinFreeKm(km *uint64) (ret *Offers) {
-	ret = &Offers{}
-
 	if km == nil {
 		return offers
 	}
+	ret = &Offers{}
 
 	for _, offer := range offers.Offers {
 		if offer.FreeKilometers >= *km {

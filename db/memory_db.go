@@ -105,8 +105,6 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 	}
 
 	// Calculate the starting and ending indices for pagination
-	log.Debug("Page: ", page)
-	log.Debug("PageSize: ", pageSize)
 	startIndex := page * pageSize
 	endIndex := startIndex + pageSize
 
@@ -118,7 +116,6 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 		endIndex = uint64(len(optional_ofs.Offers))
 	}
 
-	log.Debug("Length of offers: ", len(optional_ofs.Offers))
 	// Slice the offers list for pagination
 	paginatedOffers := optional_ofs.Offers[startIndex:endIndex]
 
