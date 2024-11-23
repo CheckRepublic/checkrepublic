@@ -205,8 +205,8 @@ func (e ElasticSearchDB) GetFilteredOffers(
 	carType *string,
 	onlyVollkasko *bool,
 	minFreeKilometer *uint64,
-) models.Offers {
-	// Construct the query dynamically
+) models.DTO {
+	// Build the query
 	query := map[string]interface{}{
 		"bool": map[string]interface{}{
 			"must":   []map[string]interface{}{},
@@ -214,30 +214,33 @@ func (e ElasticSearchDB) GetFilteredOffers(
 		},
 	}
 
-	// Add region filter
+	regionIDs := regionIdToMostSpecificRegionId[regionID]
+	log.Debug(regionIDs)
+
+	// Add filters for the query
 	query["bool"].(map[string]interface{})["filter"] = append(
 		query["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
 		map[string]interface{}{
-			"term": map[string]interface{}{
-				"mostSpecificRegionID": regionID,
+			"terms": map[string]interface{}{
+				"mostSpecificRegionID": regionIDs,
 			},
 		},
-	)
-
-	// Add time range filter
-	query["bool"].(map[string]interface{})["filter"] = append(
-		query["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
 		map[string]interface{}{
 			"range": map[string]interface{}{
 				"startDate": map[string]interface{}{
 					"gte": timeRangeStart,
+				},
+			},
+		},
+		map[string]interface{}{
+			"range": map[string]interface{}{
+				"endDate": map[string]interface{}{
 					"lte": timeRangeEnd,
 				},
 			},
 		},
 	)
 
-	// Add price range filter if provided
 	if minPrice != nil || maxPrice != nil {
 		priceRange := map[string]interface{}{}
 		if minPrice != nil {
@@ -256,7 +259,6 @@ func (e ElasticSearchDB) GetFilteredOffers(
 		)
 	}
 
-	// Add minimum free kilometer filter if provided
 	if minFreeKilometer != nil {
 		query["bool"].(map[string]interface{})["filter"] = append(
 			query["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
@@ -270,7 +272,6 @@ func (e ElasticSearchDB) GetFilteredOffers(
 		)
 	}
 
-	// Add minimum number of seats filter if provided
 	if minNumberSeats != nil {
 		query["bool"].(map[string]interface{})["filter"] = append(
 			query["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
@@ -284,7 +285,6 @@ func (e ElasticSearchDB) GetFilteredOffers(
 		)
 	}
 
-	// Add car type filter if provided
 	if carType != nil {
 		query["bool"].(map[string]interface{})["filter"] = append(
 			query["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
@@ -296,7 +296,6 @@ func (e ElasticSearchDB) GetFilteredOffers(
 		)
 	}
 
-	// Add Vollkasko filter if provided
 	if onlyVollkasko != nil && *onlyVollkasko {
 		query["bool"].(map[string]interface{})["filter"] = append(
 			query["bool"].(map[string]interface{})["filter"].([]map[string]interface{}),
@@ -308,20 +307,16 @@ func (e ElasticSearchDB) GetFilteredOffers(
 		)
 	}
 
-	// Sorting
-	sortField := "price"   // Default field
-	sortDirection := "asc" // Default direction
-
+	// Sort and pagination
+	sortField := "price"
+	sortDirection := "asc"
 	if sortOrder != "" {
 		parts := strings.Split(sortOrder, "-")
 		if len(parts) == 2 {
 			sortField = parts[0]
 			sortDirection = parts[1]
-		} else {
-			log.Warnf("Invalid sortOrder format, using default: %s", sortOrder)
 		}
 	}
-
 	sort := []map[string]interface{}{
 		{
 			sortField: map[string]interface{}{
@@ -329,26 +324,62 @@ func (e ElasticSearchDB) GetFilteredOffers(
 			},
 		},
 	}
-
-	// Pagination
 	from := (page - 1) * pageSize
 
-	// Construct the search request
+	if priceRangeWidth <= 0 {
+		priceRangeWidth = 1
+	}
+	if minFreeKilometerWidth <= 0 {
+		minFreeKilometerWidth = 1
+	}
+
+	// Aggregations
+	aggregations := map[string]interface{}{
+		"price_ranges": map[string]interface{}{
+			"histogram": map[string]interface{}{
+				"field":    "price",
+				"interval": priceRangeWidth,
+			},
+		},
+		"car_type_counts": map[string]interface{}{
+			"terms": map[string]interface{}{
+				"field": "carType",
+			},
+		},
+		"seats_count": map[string]interface{}{
+			"terms": map[string]interface{}{
+				"field": "numberSeats",
+			},
+		},
+		"free_kilometer_range": map[string]interface{}{
+			"histogram": map[string]interface{}{
+				"field":    "freeKilometers",
+				"interval": minFreeKilometerWidth,
+			},
+		},
+		"vollkasko_count": map[string]interface{}{
+			"terms": map[string]interface{}{
+				"field": "hasVollkasko",
+			},
+		},
+	}
+
+	// Construct the request body
 	reqBody := map[string]interface{}{
 		"query": query,
 		"from":  from,
 		"size":  pageSize,
 		"sort":  sort,
+		"aggs":  aggregations,
 	}
 
-	// Serialize the request
+	// Execute the search request
 	reqJSON, err := json.Marshal(reqBody)
 	if err != nil {
 		log.Errorf("Error marshalling search request: %s", err)
-		return models.Offers{}
+		return models.DTO{}
 	}
 
-	// Execute the search
 	res, err := e.es.Search(
 		e.es.Search.WithContext(ctx),
 		e.es.Search.WithIndex("offers"),
@@ -356,14 +387,13 @@ func (e ElasticSearchDB) GetFilteredOffers(
 	)
 	if err != nil {
 		log.Errorf("Error executing search: %s", err)
-		return models.Offers{}
+		return models.DTO{}
 	}
 	defer res.Body.Close()
 
-	// Check for response errors
 	if res.IsError() {
 		log.Errorf("Search response error: %s", res.String())
-		return models.Offers{}
+		return models.DTO{}
 	}
 
 	// Parse the response
@@ -373,20 +403,34 @@ func (e ElasticSearchDB) GetFilteredOffers(
 				Source models.Offer `json:"_source"`
 			} `json:"hits"`
 		} `json:"hits"`
+		Aggregations map[string]interface{} `json:"aggregations"`
 	}
 	if err := json.NewDecoder(res.Body).Decode(&searchResult); err != nil {
 		log.Errorf("Error parsing search response: %s", err)
-		return models.Offers{}
+		return models.DTO{}
 	}
+	log.Debug("Search result", searchResult)
 
-	// Aggregate results
+	// Parse hits
 	var offers []models.Offer
 	for _, hit := range searchResult.Hits.Hits {
 		offers = append(offers, hit.Source)
 	}
 
-	log.Infof("Retrieved %d offers with filtering", len(offers))
-	return models.Offers{Offers: offers}
+	priceRanges := parseHistogramBuckets(searchResult.Aggregations["price_ranges"], priceRangeWidth)
+	carTypeCounts := parseCarTypeCounts(searchResult.Aggregations["car_type_counts"])
+	seatsCount := parseSeatsCount(searchResult.Aggregations["seats_count"])
+	freeKilometerRange := parseHistogramBuckets(searchResult.Aggregations["free_kilometer_range"], minFreeKilometerWidth)
+	vollkaskoCount := parseVollkaskoCount(searchResult.Aggregations["vollkasko_count"])
+
+	return models.DTO{
+		Offers:             offers,
+		PriceRanges:        priceRanges,
+		CarTypeCounts:      carTypeCounts,
+		SeatsCount:         seatsCount,
+		FreeKilometerRange: freeKilometerRange,
+		VollkaskoCount:     vollkaskoCount,
+	}
 }
 
 func (e ElasticSearchDB) DeleteAllOffers(ctx context.Context) error {

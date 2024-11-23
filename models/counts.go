@@ -1,7 +1,7 @@
 package models
 
 // PriceRange represents the price range details.
-type PriceRange struct {
+type HistogramRange struct {
 	Start uint64 `json:"start"`
 	End   uint64 `json:"end"`
 	Count uint64 `json:"count"`
@@ -25,11 +25,4 @@ type VollkaskoCount struct {
 type SeatsCount struct {
 	NumberSeats uint64 `json:"numberSeats"`
 	Count       uint64 `json:"count"`
-}
-
-// FreeKilometerRange represents the range of free kilometers and the count of offers in this range.
-type FreeKilometerRange struct {
-	Start uint64 `json:"start"`
-	End   uint64 `json:"end"`
-	Count uint64 `json:"count"`
 }
