@@ -20,10 +20,14 @@ func parseHistogramBuckets(agg interface{}, interval uint64) []models.HistogramR
 	for _, bucket := range buckets {
 		bucketMap := bucket.(map[string]interface{})
 		log.Info(bucketMap)
+		count := uint64(bucketMap["doc_count"].(float64))
+		if count == 0 {
+			continue
+		}
 		ranges = append(ranges, models.HistogramRange{
 			Start: uint64(bucketMap["key"].(float64)),
 			End:   uint64(bucketMap["key"].(float64)) + interval,
-			Count: uint64(bucketMap["doc_count"].(float64)),
+			Count: count,
 		})
 	}
 
