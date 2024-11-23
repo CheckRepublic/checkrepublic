@@ -1,0 +1,138 @@
+meta {
+  name: [remote] post multiple offers
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://localhost:3000/api/offers
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "offers": [
+      {
+        "ID": "b6540825-c30d-46b7-b700-7f499784aac9",
+        "carType": "small",
+        "data": "dkb9O/lsb6iuTg0fyfOWwTe5gBt6GV/327fMcI6qqA8HEqLmlhRdOuv1BOa+CTwkccnmyLdKvxrJBGHGJctpw5wovV86FFHpTRN/SJeoTmwzKLqmK5gRBjR2qKHHfnFZdlNlAlodrEWu60woYB9l+phsVa6rIrmyRtzrgF24GBAzsgsMxDtlM/iCa17wtav+5quJ6lix0e2TftOz5ICtX5NH3D5DuCQcZYSGN6e8Dvbkl4geogTa3AFigoyRXdza9ouRR1PgWovj7Zs9zIFYgttDTU5RKs9N6NZ/Hv+fvDGwabpyHcvB73PgPWFtoQRSykYVgejLBnmoC6X0OJlSgA==",
+        "endDate": 1595721600000,
+        "freeKilometers": 973,
+        "hasVollkasko": true,
+        "mostSpecificRegionID": 82,
+        "numberSeats": 5,
+        "price": 7944,
+        "startDate": 1595548800000
+      },
+      {
+        "ID": "e16bb82f-c16b-467b-8b09-689a7eba95ce",
+        "carType": "sports",
+        "data": "PdHTMb1l7XW4FL40PUMcMe5DwKnJ7zQbQ3exC/BXCa731FKwGanwC4wW1BO/7yWY0TvxggwxuRaBEMDR3R6ybgAw6zxxLBbG+jmSvLf/UaXF0sBFlozVJxqcMEOA83Fb9b6yD/F3y2ze9jJv3CIrn4lFP4jmaq4QMk7up3/tcqa/0AR73gamoGR/0y8lMMDhAKXkG56LA5okxeh6AsSqPtiNM7kwS9qzNXRPo3kQldEJQdnhYMkqkadKrdFBkEn6bL8MKYqQAN9CDVfzSvaoJ8uqeencx13tzppXtuflsKJu1hQNZpG5HdNLfCTkACPUs3ybfd8TbrCndkd6jLxvLw==",
+        "endDate": 1595635200000,
+        "freeKilometers": 165,
+        "hasVollkasko": false,
+        "mostSpecificRegionID": 78,
+        "numberSeats": 2,
+        "price": 6042,
+        "startDate": 1595462400000
+      },
+      {
+        "ID": "84ef9e9b-10fe-461f-82b5-1aaea37f9742",
+        "carType": "luxury",
+        "data": "cwNTbHD4ouz4xbrb82C4yz3lRPL9/gZSfGabxWSccwJ24shuR7xjEbY5vGCRXiRHbmit0FefQzWHYU9+7160XJ8+HCvAQxEzqBaHhx9tZMUrMS3JiAmqqTbT1hFhc51bGqGwlRrpyHeSBsILZ/4eF+PmrGZiAhAqC2EEbSf5ScTAwMqAHOKhiCLKU89EOwNZenPowf+oMitC7UdpohsGSbF24xFNRxhFyaUk9IqLNkDuXAAleCRI7Ayo5oiSYmt+UCXfo56+nNVKwvGUKcdaECrZ07rlCnCDWC0vlGUEcxRNxmGtD/5JCigA+o+ujzURnWDduiazPTjuKSKsLWq2bQ==",
+        "endDate": 1595721600000,
+        "freeKilometers": 280,
+        "hasVollkasko": false,
+        "mostSpecificRegionID": 91,
+        "numberSeats": 2,
+        "price": 3007,
+        "startDate": 1595376000000
+      },
+      {
+        "ID": "fd11e3f3-6b75-4209-9dcf-485c74e164e1",
+        "carType": "sports",
+        "data": "OccPfstJBWaNUJTqeuOaPIaN73SKvgjMpVDflpBuKN0DBVrn4Nwo4NOiBjnTxSTQ4WZvingsHRxu2ZABvUUuKVdtj4j2WWJfmZaeSYhK9ShfdZ4RvHFwzCB3ehOKNTfqf28rp9dHzj+HpDYz20w8HHnZ3NuhxYpckCH95Mor+2z+E4jz69M8U0MI2HCQChQA4C7nYZr53i4pFKi/F1OTBE+n6Ht7CsISxPIfvLJJCIFK7wBZCM6s8Bpjx84sJ9q+eKMmUd5j6As2QxiLz/85PxJ2nB3q07uyIKWfZfhj+nyh4YMszK8ONCpKPHWBiJcJRNHrwYS0+pIWIMw/q+13QA==",
+        "endDate": 1595721600000,
+        "freeKilometers": 472,
+        "hasVollkasko": true,
+        "mostSpecificRegionID": 106,
+        "numberSeats": 5,
+        "price": 9219,
+        "startDate": 1595376000000
+      },
+      {
+        "ID": "e949bdfb-2c5a-42e9-9691-790b22ebe2f5",
+        "carType": "sports",
+        "data": "DjuB/IH0D1L7IIuNHx7y94gxZCvH4OLpN5Cpl2T7qsoffKPAmDrXp6jxbND0zpiRWnH9d/TN7sujExDFahr56YoKchlS7DeJaezIA3iZSkKq3wbMl3+1dugQl20/MK5GPNYpBNmrGSkWtby+9gr9MgbDC/TXAtKvU7xYg0cGScNaEetrWYGTYU8MuPW8rjdAcSmL45nv5K2UNivg5IeW90RcL3EI/EofJa3O05Ri/bVh5RNtx1ugPW4vuvriGjJaP317qKOMdS47iWYsJwT9wvai3bYws0IonPpdSM6aRxkdshlByehRJzkGi1kxkMSQnTNM8a0EaodVWJRve+QPiw==",
+        "endDate": 1595635200000,
+        "freeKilometers": 552,
+        "hasVollkasko": true,
+        "mostSpecificRegionID": 96,
+        "numberSeats": 2,
+        "price": 1789,
+        "startDate": 1595376000000
+      },
+      {
+        "ID": "b9f76649-0b3e-4ff3-b2c8-4842ee59f901",
+        "carType": "family",
+        "data": "JMODZGVXm+Tjz+LYugg/sXDVNCrW2hfH1/qmu49464bn3oDTe74fRzoM/BpajOaSoAiIcbP82eycc2Blr8tiL6wtbUfSmTI7zoTAPbN+o/zUDQPIMjxbUbK1o+P8qSzAg253gfPZyM0SRYAyofm3pWUe8Mm3gTe9noniWom1ubJJHxIi9/LsXqxqN3SHUvzJr0Y2hHNld1KKiBMht/qyWboMtRQ+5LIZ5JwBnHLMFpaTwNGu6LktHxVp1DbVcvWKc0+R+DNvd3LL33qi2c1xfsaYbKz5Jnmhx3WprWdaRYmxisSKdjMB/ZivWekf8u/cgGXdkZZ7AC+BoS9cAyLjvw==",
+        "endDate": 1595635200000,
+        "freeKilometers": 161,
+        "hasVollkasko": true,
+        "mostSpecificRegionID": 89,
+        "numberSeats": 3,
+        "price": 1778,
+        "startDate": 1595376000000
+      },
+      {
+        "ID": "3eeef021-cae1-4b92-bc51-ab015fd068f3",
+        "carType": "sports",
+        "data": "F/BPmxiViLvHpSPaXV4vIKplKxyGYb/niwqcnv6iAloSgoGb3ypweql/EsfUVqQitC+/KPVx+1RplrIVUSDRgFpnxiSaCbS0VMUTJrOR739bCXQ/kBt592n/REyIcftlMU9x7xyLDdTaoMFacXJNtrJSSM45U3ODiKKXcFoj9FN3LXVfp78cu/Ap0jwtL5r23RlVjrcjinatFKXT7PxTJx9XbSjErTrnuSXA7wu+yXTLCxaZEyARnEASSrwxUy8v1un4eBHGFUz3KZxGRNV0skHXY6C/+tR25N8B7iL8pD/DvYzttZmjRBRZI9xUna6P4J4diXvf67C0A0fhTs5zxg==",
+        "endDate": 1595635200000,
+        "freeKilometers": 706,
+        "hasVollkasko": false,
+        "mostSpecificRegionID": 101,
+        "numberSeats": 6,
+        "price": 4834,
+        "startDate": 1595376000000
+      },
+      {
+        "ID": "9d4c92c9-df54-4865-961e-a0fde97fd7e9",
+        "carType": "small",
+        "data": "cia1fSlhC5C+DuaYv8LljtlHaUSeTTWZg3mC5C7/Pu7SLEO92vyNfUhjg/VYoGA28Q4WxdkSq4k0nZw8n7fMjrgTHvpzwp4J1sjETguOtTegKuG6b5yFnTVRK8Cg1+2vloQUyLywNKvP1Yi34/yMbxi4d2B52Jlkt05jb7o49dbvNLvs2s/30XHxTShzXtN/IFDTkZzc7JJDrS//P77NNuZorM+d570pJr2IY4zWpQsbybOpUYoHXvNHhQr4ioRi+6qLO+4w5NES1wd8QoJrFl8UyZStXGgjm8TiPZLQeKfeS8/PpEz3HqlQNNVtyL92sWlwDIIYX5n23KE5ZJG0bg==",
+        "endDate": 1595721600000,
+        "freeKilometers": 567,
+        "hasVollkasko": false,
+        "mostSpecificRegionID": 56,
+        "numberSeats": 4,
+        "price": 4160,
+        "startDate": 1595548800000
+      },
+      {
+        "ID": "f7797a73-2d1e-4937-98c2-3604aa6f42b7",
+        "carType": "sports",
+        "data": "jNG4EBiHdO1UXaQjSNJWdO0RGnPRoheJt5JHKc3XRj7xEQT3yH45+xkVFY3WnbTT7f4dIBCBAmelACiCU8vsl3QpPeO4lhqHbCEhyHAHUSaWEodbLBvt/cjjmHWRCPVkCAcc68cRnJwhf6GwM5NtyZpSx3+R1hSWOC3tCzdSMzSJwioYjCpAsmSmsp8UEMM7eQ9saxo/Sma8ctUMN/rUrbMGb6SEa3OyFTJNMSpKx4SsLlnVMAQ/r54IT3KIaLhnlO2TUE07G4ZtWffXXONwjD8PNaZ/MLKzWq1GwV0v1dI3H6d47fUZtb+Ll4VMOlYVDqYA830bSI12LxOX4YOSQQ==",
+        "endDate": 1595721600000,
+        "freeKilometers": 277,
+        "hasVollkasko": false,
+        "mostSpecificRegionID": 118,
+        "numberSeats": 2,
+        "price": 4721,
+        "startDate": 1595376000000
+      },
+      {
+        "ID": "b4374549-8f1b-406b-924e-4abbfa8030e6",
+        "carType": "luxury",
+        "data": "vYiXIRIWRU/jUiSjcRWp6juLZUYn09rbpiPjbCUDoGX3gBTyAJQchu+zGEFKDLlRe+ewVTSwgfnu3ahaL1rM0LPtCHdMAMq9d8wwynDh1pV6ZqKsaLen2IWE1L0FiKSIbBCuxNc/RSIRTqw5oRwS6u9yXuQAfJ5CW6EervcSAFBf7LP80opG0QW7g0Nq1r4MyDqnRT+OvffnbEIm6sUUXSnXui1pwFyi1+8i2aB+lqBXzbnA7PjQ1SAl9vx5wdWNvtuLOfN9ny8EdZ7otOd+Shpa27CoNBEIkzn2YVy4+uKTkgGLESLZjX1VNyWcDMts2UHbKxNFm8aXLBNbnllHdw==",
+        "endDate": 1595635200000,
+        "freeKilometers": 493,
+        "hasVollkasko": true,
+        "mostSpecificRegionID": 92,
+        "numberSeats": 5,
+        "price": 3335,
+        "startDate": 1595376000000
+      }
+    ]
+  }
+}
