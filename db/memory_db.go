@@ -158,10 +158,6 @@ func regionIsLeaf(regionID uint64, check uint64) bool {
 	return false
 }
 
-func enoughDaysInBetween(num_days uint64, startDate uint64, endDate uint64) bool {
-	return endDate-startDate >= num_days*86400
-}
-
 func (m *MemoryDB) DeleteAllOffers(ctx context.Context) error {
 	m.rwlock.Lock()
 	defer m.rwlock.Unlock()
