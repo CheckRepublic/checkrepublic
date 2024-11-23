@@ -1,0 +1,10 @@
+name: Build Image
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-container:
+    uses: ./.github/workflows/build-image.yml
+    secrets: inherit
