@@ -22,6 +22,7 @@ WORKDIR /app
 
 # Copy the built binary from the builder container into the minimal runtime container
 COPY --from=builder /app/check-republic . 
+COPY models/regions.json ./models/regions.json
 
 # Run your Go application and then sleep indefinitely
 ENTRYPOINT ["/app/check-republic"]
