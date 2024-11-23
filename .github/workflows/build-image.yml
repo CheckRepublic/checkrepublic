@@ -45,7 +45,7 @@ jobs:
       - name: Build and push Docker Image
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           push: true
@@ -65,7 +65,7 @@ jobs:
           proxy_username: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
           proxy_key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
           script: |
-            export CR_PAT=${{ vars.PULL_ACCESS_TOKEN }}
+            export CR_PAT=${{ secrets.PULL_ACCESS_TOKEN }}
             echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
             docker pull ${{ needs.build.outputs.tags }}
             docker run -d ${{ needs.build.outputs.tags }}
