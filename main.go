@@ -13,6 +13,8 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 )
 
+var filename = ""
+
 func main() {
 	if os.Getenv("DEBUG") == "true" {
 		log.SetLevel(log.LevelDebug)
@@ -33,31 +35,42 @@ func main() {
 	log.Fatal(app.Listen(":3000"))
 }
 
+// Slow, ugly but a bare necessity - kill with fire as soon as possible
 func debugHelper(c *fiber.Ctx) {
-	queryParams := c.Queries()
-
 	// Query Type
 	queryMethod := c.Method()
 
-	// Get request body
-	body := c.Body()
-
 	if queryMethod == "GET" {
 		// Append request params to a file
-		writeToFile(queryParams, queryMethod, body)
+		writeGet(c.Queries())
 	}
+	if queryMethod == "POST" {
+		// Append request body to a file
+		writePost(c.Body())
+	}
+	if queryMethod == "DELETE" {
+		// New test case - create a new file
+		filename = time.Now().String()
+	}
+}
 
-	// Create a timestamped filename
-	timestamp := time.Now()
-	filename := fmt.Sprintf("request_%s_%s.txt", queryMethod, timestamp)
-
+// writeGet appends the query parameters to a file
+func writeGet(queryParams map[string]string) {
 	// Create the content to be written to the file
-	content := fmt.Sprintf("Query Params: %v\nBody: %s", queryParams, body)
+	content := fmt.Sprintf("Query Params: %v", queryParams)
 
 	// Write the content to the file
-	err := ioutil.WriteFile("result/"+filename, []byte(content), 0644)
+	err := ioutil.WriteFile("result/GET_"+filename, []byte(content), 0644)
 	if err != nil {
-		log.Info("Error writing to file")
+		log.Error("Error writing to file")
+	}
+}
+
+func writePost(body []byte) {
+	// Write the content to the file
+	err := ioutil.WriteFile("result/POST_"+filename, body, 0644)
+	if err != nil {
+		log.Error("Error writing to file")
 	}
 }
 
