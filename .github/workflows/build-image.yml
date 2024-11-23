@@ -55,5 +55,5 @@ jobs:
 
       - id: output-tag
         run: |
-          echo "image_tag=${{ steps.meta.outputs.tags[0] }} >> "$GITHUB_OUTPUT"
+          echo "image_tag=${{ steps.meta.outputs.tags[0] }}" >> $GITHUB_OUTPUT
 
