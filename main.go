@@ -44,6 +44,9 @@ func postHandler(c *fiber.Ctx) error {
 }
 
 func getHandler(c *fiber.Ctx) error {
+    //log the request
+    log.Println(c.Queries())
+
 	regionID := c.Query("regionID")
     if regionID == "" {
         return c.Status(fiber.StatusBadRequest).SendString("regionID is required")
