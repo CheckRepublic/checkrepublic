@@ -40,21 +40,6 @@ type Offer struct {
 	FreeKilometers       uint64    `json:"freeKilometers"`
 }
 
-func (offers *Offers) FilterByRegion(regionId uint64) (ret *Offers) {
-	ret = &Offers{}
-	validRegions := RegionIdToMostSpecificRegionId[int32(regionId)]
-
-	for _, offer := range offers.Offers {
-		for _, validRegion := range validRegions {
-			if offer.MostSpecificRegionID == uint64(validRegion) {
-				ret.Offers = append(ret.Offers, offer)
-			}
-		}
-	}
-
-	return ret
-}
-
 func (offers *Offers) FilterByTimeRange(start uint64, end uint64) (ret *Offers) {
 	ret = &Offers{}
 

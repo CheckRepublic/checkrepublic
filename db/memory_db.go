@@ -4,49 +4,44 @@ import (
 	"check_republic/models"
 	"context"
 	"sort"
-	"sync"
 
 	"github.com/gofiber/fiber/v2/log"
 )
 
 type MemoryDB struct {
 	db     []*models.Offer
-	rwlock *sync.RWMutex
+	// takes a inner node region and returns all leaf offers in leaf regions
+	regionIdToOffers map[int32][]*models.Offer
 }
 
 func InitMemoryDB() {
 	DB = MemoryDB{
 		db:     []*models.Offer{},
-		rwlock: &sync.RWMutex{},
+		regionIdToOffers: make(map[int32][]*models.Offer),
 	}
 	log.Info("Database created")
 }
 
 func (m *MemoryDB) CreateOffers(ctx context.Context, offers ...*models.Offer) error {
-	m.rwlock.Lock()
-	defer m.rwlock.Unlock()
-
 	for _, offer := range offers {
 		m.db = append(m.db, offer)
+		for _, anchecstor := range models.SpecificRegionToAnchestor[int32(offer.MostSpecificRegionID)]{
+			m.regionIdToOffers[anchecstor] = append(m.regionIdToOffers[anchecstor], offer)
+		}
 	}
 
+	log.Infof("map %v", m.regionIdToOffers)
 	return nil
 }
 
 func (m *MemoryDB) GetAllOffers(ctx context.Context) models.Offers {
-	m.rwlock.RLock()
-	defer m.rwlock.RUnlock()
-
 	return models.Offers{Offers: m.db}
 }
 
 func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeRangeStart uint64, timeRangeEnd uint64, numberDays uint64, sortOrder string, page uint64, pageSize uint64, priceRangeWidth uint32, minFreeKilometerWidth uint32, minNumberSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) models.DTO {
-	m.rwlock.RLock()
-	defer m.rwlock.RUnlock()
-
-	ofs := &models.Offers{Offers: m.db}
+	ofs := &models.Offers{Offers: m.regionIdToOffers[int32(regionID)]}
+	log.Infof("offers %v", ofs)
 	required_ofs := ofs.
-		FilterByRegion(regionID).
 		FilterByTimeRange(timeRangeStart, timeRangeEnd).
 		FilterByNumberDays(numberDays)
 
@@ -170,21 +165,7 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 	}
 }
 
-func regionIsLeaf(regionID uint64, check uint64) bool {
-	regions := models.RegionIdToMostSpecificRegionId[int32(regionID)]
-	for _, region := range regions {
-		if region == int32(check) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (m *MemoryDB) DeleteAllOffers(ctx context.Context) error {
-	m.rwlock.Lock()
-	defer m.rwlock.Unlock()
-
 	m.db = []*models.Offer{}
 
 	return nil
