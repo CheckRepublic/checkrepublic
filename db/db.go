@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"check_republic/models"
@@ -7,9 +7,18 @@ import (
 	"github.com/hashicorp/go-memdb"
 )
 
-var db *memdb.MemDB
+var Db *memdb.MemDB
 
-func CreateDB() (*memdb.MemDB, error) {
+func Init() {
+	db, err := createDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	Db = db
+	log.Info("Database created")
+}
+
+func createDB() (*memdb.MemDB, error) {
 	// Create the DB schema
 	schema := &memdb.DBSchema{
 		Tables: map[string]*memdb.TableSchema{
@@ -32,7 +41,7 @@ func CreateDB() (*memdb.MemDB, error) {
 
 func CreateOffers(o ...models.Offer) {
 	// Start a new transaction for writing
-	txn := db.Txn(true)
+	txn := Db.Txn(true)
 	for _, offer := range o {
 		log.Info("Inserting offer: ", offer)
 		err := txn.Insert("offer", offer)
@@ -44,7 +53,7 @@ func CreateOffers(o ...models.Offer) {
 }
 
 func GetAllOffers() models.Offers {
-	txn := db.Txn(false)
+	txn := Db.Txn(false)
 	defer txn.Abort()
 
 	it, err := txn.Get("offer", "id")
