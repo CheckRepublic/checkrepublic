@@ -67,5 +67,5 @@ jobs:
           script: |
             export CR_PAT=${{ vars.PULL_ACCESS_TOKEN }}
             echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
-            docker pull ${{ needs.build.outputs.image }}:${{ needs.build.outputs.tags }}
-            docker run -d ${{ needs.build.outputs.image }}:${{ needs.build.outputs.tags }}
+            docker pull ${{ needs.build.outputs.tags }}
+            docker run -d ${{ needs.build.outputs.tags }}
