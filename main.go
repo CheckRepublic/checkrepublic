@@ -16,12 +16,17 @@ import (
 	"github.com/gin-gonic/gin"
 
 	_ "go.uber.org/automaxprocs"
+
+	_ "net/http/pprof"
 )
 
 var filename = time.Now().String()
 var LogToFile = os.Getenv("LOG") == "true"
 
 func main() {
+	go func() {
+		log.Println(http.ListenAndServe(":6060", nil))
+	  }()
 	if os.Getenv("DEBUG") == "true" {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
