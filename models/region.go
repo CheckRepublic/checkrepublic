@@ -2,7 +2,6 @@ package models
 
 import (
 	"log"
-	"os"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -23,23 +22,23 @@ func InitRegions() {
 		log.Fatalf("failed to unmarshal JSON: %v", err)
 	}
 
-  SpecificRegionToAnchestor = make(map[int32][]int32)
-  region.ToAncestorMap(SpecificRegionToAnchestor, []int32{})
+	SpecificRegionToAnchestor = make(map[int32][]int32)
+	region.ToAncestorMap(SpecificRegionToAnchestor, []int32{})
 }
 
 func (region *Region) ToAncestorMap(ancestorMap map[int32][]int32, ancestors []int32) {
-  currentAncestors := append([]int32{}, ancestors...) // Copy the current ancestors
-  currentAncestors = append(currentAncestors, region.Id)
+	currentAncestors := append([]int32{}, ancestors...) // Copy the current ancestors
+	currentAncestors = append(currentAncestors, region.Id)
 
-  if len(region.SubRegions) == 0 {
-      // It's a leaf node
-      ancestorMap[region.Id] = currentAncestors
-  } else {
-      // It's an inner node
-      for _, subRegion := range region.SubRegions {
-          subRegion.ToAncestorMap(ancestorMap, currentAncestors)
-      }
-  }
+	if len(region.SubRegions) == 0 {
+		// It's a leaf node
+		ancestorMap[region.Id] = currentAncestors
+	} else {
+		// It's an inner node
+		for _, subRegion := range region.SubRegions {
+			subRegion.ToAncestorMap(ancestorMap, currentAncestors)
+		}
+	}
 }
 
 const jsonRegion = `{
