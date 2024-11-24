@@ -12,7 +12,7 @@ RUN go mod download
 COPY ./ ./
 
 # Build the Go application
-RUN CGO_ENABLED=0 go build -o check-republic .
+RUN CGO_ENABLED=0 go build -tags=jsoniter -o check-republic .
 
 # Start a new stage for the minimal runtime container
 FROM gcr.io/distroless/static-debian12

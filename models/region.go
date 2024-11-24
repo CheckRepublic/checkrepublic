@@ -1,17 +1,19 @@
 package models
 
 import (
-	"encoding/json"
 	"log"
 	"os"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
 type Region struct {
-	Id         int32   `json:"id"`
+	Id         int32    `json:"id"`
 	Name       string   `json:"name"`
 	SubRegions []Region `json:"subRegions"`
 }
-
 
 var RegionIdToMostSpecificRegionId map[int32][]int32
 
@@ -28,17 +30,17 @@ func InitRegions() {
 
 func (region *Region) ToLeafMap(leafMap map[int32][]int32) {
 	if len(region.SubRegions) == 0 {
-        // It's a leaf node
-        leafMap[region.Id] = []int32{region.Id}
-    } else {
-        // It's an inner node
-        var leaves []int32
-        for _, subRegion := range region.SubRegions {
-            subRegion.ToLeafMap(leafMap)
-            leaves = append(leaves, leafMap[subRegion.Id]...)
-        }
-        leafMap[region.Id] = leaves
-    }
+		// It's a leaf node
+		leafMap[region.Id] = []int32{region.Id}
+	} else {
+		// It's an inner node
+		var leaves []int32
+		for _, subRegion := range region.SubRegions {
+			subRegion.ToLeafMap(leafMap)
+			leaves = append(leaves, leafMap[subRegion.Id]...)
+		}
+		leafMap[region.Id] = leaves
+	}
 }
 
 func readRegions(filePath string) Region {
