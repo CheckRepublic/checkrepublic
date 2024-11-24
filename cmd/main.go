@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/atotto/clipboard"
 	"os"
 )
 
@@ -14,12 +15,12 @@ type LogEntry struct {
 }
 
 type Log struct {
-	ID             string       `json:"id"`
-	StartTime      string       `json:"start_time"`
-	Duration       float64      `json:"duration"`
-	WriteConfig    *WriteConfig `json:"write_config,omitempty"`
-	ExpectedResult *Result      `json:"expected_result,omitempty"`
-	ActualResult   *Result      `json:"actual_result,omitempty"`
+	ID             string        `json:"id"`
+	StartTime      string        `json:"start_time"`
+	Duration       float64       `json:"duration"`
+	WriteConfig    *WriteConfig  `json:"write_config,omitempty"`
+	ExpectedResult *Result       `json:"expected_result,omitempty"`
+	ActualResult   *Result       `json:"actual_result,omitempty"`
 	SearchConfig   *SearchConfig `json:"search_config,omitempty"`
 }
 
@@ -29,30 +30,30 @@ type WriteConfig struct {
 }
 
 type Offer struct {
-	OfferID        string  `json:"OfferID"`
-	RegionID       int     `json:"RegionID"`
-	CarType        string  `json:"CarType"`
-	NumberDays     int     `json:"NumberDays"`
-	NumberSeats    int     `json:"NumberSeats"`
-	StartTimestamp string  `json:"StartTimestamp"`
-	EndTimestamp   string  `json:"EndTimestamp"`
-	Price          int     `json:"Price"`
-	HasVollkasko   bool    `json:"HasVollkasko"`
-	FreeKilometers int     `json:"FreeKilometers"`
+	OfferID        string `json:"OfferID"`
+	RegionID       int    `json:"RegionID"`
+	CarType        string `json:"CarType"`
+	NumberDays     int    `json:"NumberDays"`
+	NumberSeats    int    `json:"NumberSeats"`
+	StartTimestamp string `json:"StartTimestamp"`
+	EndTimestamp   string `json:"EndTimestamp"`
+	Price          int    `json:"Price"`
+	HasVollkasko   bool   `json:"HasVollkasko"`
+	FreeKilometers int    `json:"FreeKilometers"`
 }
 
 type Result struct {
-	Offers            []OfferResult      `json:"Offers"`
-	CarTypeCounts     map[string]int     `json:"CarTypeCounts"`
-	FreeKilometerRanges []RangeCount     `json:"FreeKilometerRanges"`
-	PriceRanges       []RangeCount       `json:"PriceRanges"`
-	SeatsCounts       map[string]int     `json:"SeatsCounts"`
-	VollkaskoCount    map[string]int     `json:"VollkaskoCount"`
+	Offers              []OfferResult  `json:"Offers"`
+	CarTypeCounts       map[string]int `json:"CarTypeCounts"`
+	FreeKilometerRanges []RangeCount   `json:"FreeKilometerRanges"`
+	PriceRanges         []RangeCount   `json:"PriceRanges"`
+	SeatsCounts         map[string]int `json:"SeatsCounts"`
+	VollkaskoCount      map[string]int `json:"VollkaskoCount"`
 }
 
 type OfferResult struct {
-	OfferID      string `json:"OfferID"`
-	IsDataCorrect bool  `json:"IsDataCorrect"`
+	OfferID       string `json:"OfferID"`
+	IsDataCorrect bool   `json:"IsDataCorrect"`
 }
 
 type RangeCount struct {
@@ -62,21 +63,21 @@ type RangeCount struct {
 }
 
 type SearchConfig struct {
-	ID              string  `json:"ID"`
-	RegionID        int     `json:"RegionID"`
-	StartRange      string  `json:"StartRange"`
-	EndRange        string  `json:"EndRange"`
-	NumberDays      int     `json:"NumberDays"`
-	CarType         *string `json:"CarType,omitempty"`
-	OnlyVollkasko   *bool   `json:"OnlyVollkasko,omitempty"`
-	MinFreeKilometer *int   `json:"MinFreeKilometer,omitempty"`
-	MinNumberSeats  *int    `json:"MinNumberSeats,omitempty"`
-	MinPrice        *int    `json:"MinPrice,omitempty"`
-	MaxPrice        *int    `json:"MaxPrice,omitempty"`
-	Pagination      Pagination `json:"Pagination"`
-	Order           string  `json:"Order"`
-	PriceBucketWidth int    `json:"PriceBucketWidth"`
-	FreeKmBucketWidth int   `json:"FreeKmBucketWidth"`
+	ID                string     `json:"ID"`
+	RegionID          int        `json:"RegionID"`
+	StartRange        string     `json:"StartRange"`
+	EndRange          string     `json:"EndRange"`
+	NumberDays        int        `json:"NumberDays"`
+	CarType           *string    `json:"CarType,omitempty"`
+	OnlyVollkasko     *bool      `json:"OnlyVollkasko,omitempty"`
+	MinFreeKilometer  *int       `json:"MinFreeKilometer,omitempty"`
+	MinNumberSeats    *int       `json:"MinNumberSeats,omitempty"`
+	MinPrice          *int       `json:"MinPrice,omitempty"`
+	MaxPrice          *int       `json:"MaxPrice,omitempty"`
+	Pagination        Pagination `json:"Pagination"`
+	Order             string     `json:"Order"`
+	PriceBucketWidth  int        `json:"PriceBucketWidth"`
+	FreeKmBucketWidth int        `json:"FreeKmBucketWidth"`
 }
 
 type Pagination struct {
@@ -109,10 +110,30 @@ func main() {
 		// check if the expected and actual results are equal and Print the expected and actual results if they are not equal
 		if entry.Log.ExpectedResult != nil && entry.Log.ActualResult != nil {
 			if !compareResults(entry.Log.ExpectedResult, entry.Log.ActualResult) {
-			expectedJSON, _ := json.MarshalIndent(entry.Log.ExpectedResult, "", "  ")
-			actualJSON, _ := json.MarshalIndent(entry.Log.ActualResult, "", "  ")
-			fmt.Printf("\033[32mExpected: %s\033[0m\n", expectedJSON)
-			fmt.Printf("\033[31mActual: %s\033[0m\n", actualJSON)
+				expectedJSON, _ := json.MarshalIndent(entry.Log.ExpectedResult, "", "  ")
+				actualJSON, _ := json.MarshalIndent(entry.Log.ActualResult, "", "  ")
+
+				// Copy expected result to clipboard
+				err := clipboard.WriteAll(string(expectedJSON))
+				if err != nil {
+					fmt.Printf("Error copying to clipboard: %v\n", err)
+				} else {
+					fmt.Println("\033[32mExpected result copied to clipboard!\033[0m")
+				}
+				fmt.Println("\033[32mExpected:\033[0m")
+				fmt.Println("Press Enter to continue...")
+				fmt.Scanln()
+
+				// Copy actual result to clipboard
+				err = clipboard.WriteAll(string(actualJSON))
+				if err != nil {
+					fmt.Printf("Error copying to clipboard: %v\n", err)
+				} else {
+					fmt.Println("\033[31mActual result copied to clipboard!\033[0m")
+				}
+				fmt.Println("\033[31mActual:\033[0m")
+				fmt.Println("Press Enter to continue...")
+				fmt.Scanln()
 			}
 		}
 		fmt.Println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")

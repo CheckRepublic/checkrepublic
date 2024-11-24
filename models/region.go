@@ -1,43 +1,46 @@
 package models
 
 import (
-	"encoding/json"
 	"log"
 	"os"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
 type Region struct {
-	Id         uint64   `json:"id"`
+	Id         int32    `json:"id"`
 	Name       string   `json:"name"`
 	SubRegions []Region `json:"subRegions"`
 }
 
-var RegionTree Region = readRegions("./models/regions.json")
+var RegionIdToMostSpecificRegionId map[int32][]int32
 
-func (region *Region) GetRegionById(id uint64) *Region {
-	if region.Id == id {
-		return region
+func InitRegions() {
+	// var RegionTree Region = readRegions("./models/regions.json")
+	var region Region
+	if err := json.Unmarshal([]byte(jsonRegion), &region); err != nil {
+		log.Fatalf("failed to unmarshal JSON: %v", err)
 	}
-
-	for _, subRegion := range region.SubRegions {
-		if found := subRegion.GetRegionById(id); found != nil {
-			return found
-		}
-	}
-
-	return nil
+	RegionIdToMostSpecificRegionId = make(map[int32][]int32)
+	region.ToLeafMap(RegionIdToMostSpecificRegionId)
+	// log.Printf("regionIdToMostSpecificRegionId: %v", RegionIdToMostSpecificRegionId)
 }
 
-func (region *Region) GetLeafs() []Region {
+func (region *Region) ToLeafMap(leafMap map[int32][]int32) {
 	if len(region.SubRegions) == 0 {
-		return []Region{*region}
+		// It's a leaf node
+		leafMap[region.Id] = []int32{region.Id}
+	} else {
+		// It's an inner node
+		var leaves []int32
+		for _, subRegion := range region.SubRegions {
+			subRegion.ToLeafMap(leafMap)
+			leaves = append(leaves, leafMap[subRegion.Id]...)
+		}
+		leafMap[region.Id] = leaves
 	}
-
-	leafs := make([]Region, 0)
-	for _, subRegion := range region.SubRegions {
-		leafs = append(leafs, subRegion.GetLeafs()...)
-	}
-	return leafs
 }
 
 func readRegions(filePath string) Region {
@@ -53,3 +56,685 @@ func readRegions(filePath string) Region {
 
 	return region
 }
+
+const jsonRegion = `{
+    "id": 0,
+    "name": "European Union",
+    "subregions": [
+      {
+        "id": 1,
+        "name": "Germany",
+        "subregions": [
+          {
+            "id": 7,
+            "name": "Berlin",
+            "subregions": [
+              {
+                "id": 21,
+                "name": "Mitte",
+                "subregions": [
+                  {
+                    "id": 58,
+                    "name": "Brandenburg Gate",
+                    "subregions": []
+                  },
+                  {
+                    "id": 59,
+                    "name": "Berlin Cathedral",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 22,
+                "name": "Kreuzberg",
+                "subregions": [
+                  {
+                    "id": 60,
+                    "name": "East Side Gallery",
+                    "subregions": []
+                  },
+                  {
+                    "id": 61,
+                    "name": "Checkpoint Charlie",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 23,
+                "name": "Berlin Brandenburg Airport",
+                "subregions": [
+                  {
+                    "id": 62,
+                    "name": "Terminal A",
+                    "subregions": []
+                  },
+                  {
+                    "id": 63,
+                    "name": "Terminal B",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 8,
+            "name": "Munich",
+            "subregions": [
+              {
+                "id": 24,
+                "name": "Maxvorstadt",
+                "subregions": [
+                  {
+                    "id": 64,
+                    "name": "Oper Munich",
+                    "subregions": []
+                  },
+                  {
+                    "id": 65,
+                    "name": "University of Munich",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 25,
+                "name": "Neuhausen Nymphenburg",
+                "subregions": [
+                  {
+                    "id": 66,
+                    "name": "Nymphenburg Palace",
+                    "subregions": []
+                  },
+                  {
+                    "id": 67,
+                    "name": "CHECK24 Office",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 26,
+                "name": "Schwabing",
+                "subregions": [
+                  {
+                    "id": 68,
+                    "name": "English Garden",
+                    "subregions": []
+                  },
+                  {
+                    "id": 69,
+                    "name": "Augustiner Brewery",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 27,
+                "name": "Old Town",
+                "subregions": [
+                  {
+                    "id": 70,
+                    "name": "Viktualienmarkt",
+                    "subregions": []
+                  },
+                  {
+                    "id": 71,
+                    "name": "Marienplatz",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 28,
+                "name": "Munich Airport",
+                "subregions": [
+                  {
+                    "id": 72,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  },
+                  {
+                    "id": 73,
+                    "name": "Terminal 2",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 9,
+            "name": "Frankfurt",
+            "subregions": [
+              {
+                "id": 29,
+                "name": "Sachsenhausen",
+                "subregions": [
+                  {
+                    "id": 74,
+                    "name": "Eiserner Steg",
+                    "subregions": []
+                  },
+                  {
+                    "id": 75,
+                    "name": "Museum Embankment",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 30,
+                "name": "Frankfurt Airport",
+                "subregions": [
+                  {
+                    "id": 76,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  },
+                  {
+                    "id": 77,
+                    "name": "Terminal 2",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "name": "France",
+        "subregions": [
+          {
+            "id": 10,
+            "name": "Paris",
+            "subregions": [
+              {
+                "id": 31,
+                "name": "Charles de Gaulle Airport",
+                "subregions": [
+                  {
+                    "id": 78,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  },
+                  {
+                    "id": 79,
+                    "name": "Terminal 2A",
+                    "subregions": []
+                  },
+                  {
+                    "id": 80,
+                    "name": "Terminal 2B",
+                    "subregions": []
+                  },
+                  {
+                    "id": 81,
+                    "name": "Terminal 2C",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 32,
+                "name": "Orly Airport",
+                "subregions": [
+                  {
+                    "id": 82,
+                    "name": "Terminal South",
+                    "subregions": []
+                  },
+                  {
+                    "id": 83,
+                    "name": "Terminal West",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 33,
+                "name": "1st Arrondissement",
+                "subregions": [
+                  {
+                    "id": 84,
+                    "name": "Louvre",
+                    "subregions": []
+                  },
+                  {
+                    "id": 85,
+                    "name": "Palais Royal",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 34,
+                "name": "7th Arrondissement",
+                "subregions": [
+                  {
+                    "id": 86,
+                    "name": "Eiffel Tower",
+                    "subregions": []
+                  },
+                  {
+                    "id": 87,
+                    "name": "Champ de Mars",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 35,
+                "name": "Montmartre",
+                "subregions": [
+                  {
+                    "id": 88,
+                    "name": "Sacré-Cœur Basilica",
+                    "subregions": []
+                  },
+                  {
+                    "id": 89,
+                    "name": "Place du Tertre",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 11,
+            "name": "Nice",
+            "subregions": [
+              {
+                "id": 36,
+                "name": "Nice Côte d'Azur Airport",
+                "subregions": [
+                  {
+                    "id": 90,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  },
+                  {
+                    "id": 91,
+                    "name": "Terminal 2",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 37,
+                "name": "Old Town",
+                "subregions": [
+                  {
+                    "id": 92,
+                    "name": "Promenade des Anglais",
+                    "subregions": []
+                  },
+                  {
+                    "id": 93,
+                    "name": "Castle Hill",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "name": "Italy",
+        "subregions": [
+          {
+            "id": 12,
+            "name": "Rome",
+            "subregions": [
+              {
+                "id": 38,
+                "name": "Leonardo da Vinci–Fiumicino Airport",
+                "subregions": [
+                  {
+                    "id": 94,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  },
+                  {
+                    "id": 95,
+                    "name": "Terminal 3",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 39,
+                "name": "Centro Storico",
+                "subregions": [
+                  {
+                    "id": 96,
+                    "name": "Colosseum",
+                    "subregions": []
+                  },
+                  {
+                    "id": 97,
+                    "name": "Pantheon",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 13,
+            "name": "Milan",
+            "subregions": [
+              {
+                "id": 40,
+                "name": "Malpensa Airport",
+                "subregions": [
+                  {
+                    "id": 98,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  },
+                  {
+                    "id": 99,
+                    "name": "Terminal 2",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 41,
+                "name": "Linate Airport",
+                "subregions": [
+                  {
+                    "id": 100,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 42,
+                "name": "Brera",
+                "subregions": [
+                  {
+                    "id": 101,
+                    "name": "Pinacoteca di Brera",
+                    "subregions": []
+                  },
+                  {
+                    "id": 102,
+                    "name": "Brera Botanical Garden",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 14,
+            "name": "Venice",
+            "subregions": [
+              {
+                "id": 43,
+                "name": "Venice Marco Polo Airport",
+                "subregions": [
+                  {
+                    "id": 103,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 44,
+                "name": "San Marco",
+                "subregions": [
+                  {
+                    "id": 104,
+                    "name": "St. Mark's Basilica",
+                    "subregions": []
+                  },
+                  {
+                    "id": 105,
+                    "name": "Doge's Palace",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "name": "Portugal",
+        "subregions": [
+          {
+            "id": 15,
+            "name": "Lisbon",
+            "subregions": [
+              {
+                "id": 45,
+                "name": "Lisbon Airport",
+                "subregions": [
+                  {
+                    "id": 106,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  },
+                  {
+                    "id": 107,
+                    "name": "Terminal 2",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 46,
+                "name": "Alfama",
+                "subregions": [
+                  {
+                    "id": 108,
+                    "name": "São Jorge Castle",
+                    "subregions": []
+                  },
+                  {
+                    "id": 109,
+                    "name": "Fado Museum",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 16,
+            "name": "Porto",
+            "subregions": [
+              {
+                "id": 47,
+                "name": "Porto Airport",
+                "subregions": [
+                  {
+                    "id": 110,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  },
+                  {
+                    "id": 111,
+                    "name": "Terminal 2",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 48,
+                "name": "Ribeira",
+                "subregions": [
+                  {
+                    "id": 112,
+                    "name": "Dom Luís I Bridge",
+                    "subregions": []
+                  },
+                  {
+                    "id": 113,
+                    "name": "Clérigos Tower",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "name": "Netherlands",
+        "subregions": [
+          {
+            "id": 17,
+            "name": "Amsterdam",
+            "subregions": [
+              {
+                "id": 49,
+                "name": "Amsterdam Airport Schiphol",
+                "subregions": [
+                  {
+                    "id": 114,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  },
+                  {
+                    "id": 115,
+                    "name": "Terminal 2",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 50,
+                "name": "Jordaan",
+                "subregions": [
+                  {
+                    "id": 116,
+                    "name": "Anne Frank House",
+                    "subregions": []
+                  },
+                  {
+                    "id": 117,
+                    "name": "Westerkerk",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 18,
+            "name": "Rotterdam",
+            "subregions": [
+              {
+                "id": 51,
+                "name": "Rotterdam The Hague Airport",
+                "subregions": [
+                  {
+                    "id": 118,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 52,
+                "name": "Delfshaven",
+                "subregions": [
+                  {
+                    "id": 119,
+                    "name": "Delfshaven Harbor",
+                    "subregions": []
+                  },
+                  {
+                    "id": 120,
+                    "name": "Pilgrim Fathers Church",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "name": "Belgium",
+        "subregions": [
+          {
+            "id": 19,
+            "name": "Brussels",
+            "subregions": [
+              {
+                "id": 53,
+                "name": "Brussels Airport",
+                "subregions": [
+                  {
+                    "id": 121,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 54,
+                "name": "Brussels South Charleroi Airport",
+                "subregions": [
+                  {
+                    "id": 122,
+                    "name": "Terminal 1",
+                    "subregions": []
+                  }
+                ]
+              },
+              {
+                "id": 55,
+                "name": "European Quarter",
+                "subregions": [
+                  {
+                    "id": 123,
+                    "name": "European Commission",
+                    "subregions": []
+                  },
+                  {
+                    "id": 124,
+                    "name": "Parc Leopold",
+                    "subregions": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 20,
+            "name": "Antwerp",
+            "subregions": [
+              {
+                "id": 56,
+                "name": "Antwerp Central Station",
+                "subregions": []
+              },
+              {
+                "id": 57,
+                "name": "Grote Markt",
+                "subregions": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }`
