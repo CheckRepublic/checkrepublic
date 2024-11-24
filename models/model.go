@@ -43,18 +43,16 @@ type Offer struct {
 }
 
 func (offers *Offers) FilterMandatory(start uint64, end uint64, num uint64) (ret *Offers) {
-	ret = &Offers{
-		Offers: make([]*Offer, 0, len(offers.Offers)/2),
-	}
+	tmp_offers := make([]*Offer, 0, len(offers.Offers)/2)
 	n := num * msFactor
 	for _, offer := range offers.Offers {
 		// Check number of days
 		if offer.EndDate-offer.StartDate == n && offer.StartDate >= start && offer.EndDate <= end {
-			ret.Offers = append(ret.Offers, offer)
+			tmp_offers = append(tmp_offers, offer)
 		}
 	}
 
-	return ret
+	return &Offers{Offers: tmp_offers}
 }
 
 type Aggregations struct {
