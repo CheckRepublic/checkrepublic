@@ -43,6 +43,18 @@ type Offer struct {
 	FreeKilometers       uint64    `json:"freeKilometers"`
 }
 
+func (offers *Offers) FilterMandatory(start uint64, end uint64, num uint64) (ret *Offers) {
+	tmp_offers := make([]*Offer, 0, len(offers.Offers)/2)
+	for _, offer := range offers.Offers {
+		// Check number of days
+		if offer.NumberDays == num && offer.StartDate >= start && offer.EndDate <= end {
+			tmp_offers = append(tmp_offers, offer)
+		}
+	}
+
+	return &Offers{Offers: tmp_offers}
+}
+
 type Aggregations struct {
 	PricesAgg      *Offers
 	FreeKmAgg      *Offers
@@ -52,7 +64,7 @@ type Aggregations struct {
 	OptionalAgg    *Offers
 }
 
-func (offers *Offers) FilterAggregations(start uint64, end uint64, num uint64, numSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) (ret *Aggregations) {
+func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) (ret *Aggregations) {
 	ret = &Aggregations{
 		PricesAgg: &Offers{
 			Offers: make([]*Offer, 0, len(offers.Offers)/2),
@@ -69,7 +81,6 @@ func (offers *Offers) FilterAggregations(start uint64, end uint64, num uint64, n
 	}
 
 	for _, offer := range offers.Offers {
-		var boolTime = offer.NumberDays == num && offer.StartDate >= start && offer.EndDate <= end
 		var boolSeats = numSeats == nil || offer.NumberSeats >= *numSeats
 		var boolCar = carType == nil || offer.CarType == *carType
 		var boolKasko = onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko
@@ -77,8 +88,7 @@ func (offers *Offers) FilterAggregations(start uint64, end uint64, num uint64, n
 		var boolPrice = ((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice))
 
 		// For prices aggregation
-		if boolTime &&
-			boolSeats &&
+		if boolSeats &&
 			boolCar &&
 			boolKasko &&
 			boolFreeKm {
@@ -86,8 +96,7 @@ func (offers *Offers) FilterAggregations(start uint64, end uint64, num uint64, n
 		}
 
 		// For free km aggregation
-		if boolTime &&
-			boolSeats &&
+		if boolSeats &&
 			boolCar &&
 			boolKasko &&
 			boolPrice {
@@ -95,8 +104,7 @@ func (offers *Offers) FilterAggregations(start uint64, end uint64, num uint64, n
 		}
 
 		// For car type aggregation
-		if boolTime &&
-			boolSeats &&
+		if boolSeats &&
 			boolFreeKm &&
 			boolKasko &&
 			boolPrice {
@@ -104,8 +112,7 @@ func (offers *Offers) FilterAggregations(start uint64, end uint64, num uint64, n
 		}
 
 		// For vollkasko aggregation
-		if boolTime &&
-			boolSeats &&
+		if boolSeats &&
 			boolFreeKm &&
 			boolCar &&
 			boolPrice {
@@ -113,8 +120,7 @@ func (offers *Offers) FilterAggregations(start uint64, end uint64, num uint64, n
 		}
 
 		// For seats aggregation
-		if boolTime &&
-			boolKasko &&
+		if boolKasko &&
 			boolFreeKm &&
 			boolCar &&
 			boolPrice {
@@ -122,8 +128,7 @@ func (offers *Offers) FilterAggregations(start uint64, end uint64, num uint64, n
 		}
 
 		// For optional aggregation
-		if boolTime &&
-			boolSeats &&
+		if boolSeats &&
 			boolKasko &&
 			boolFreeKm &&
 			boolCar &&

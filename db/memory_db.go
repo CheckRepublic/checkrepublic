@@ -47,9 +47,11 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 	m.rwlock.RLock()
 	ofs := &models.Offers{Offers: m.regionIdToOffers[int32(regionID)]}
 	m.rwlock.RUnlock()
+	required_ofs := ofs.FilterMandatory(timeRangeStart, timeRangeEnd, numberDays)
+
 
 	// Optional filters
-	aggs := ofs.FilterAggregations(timeRangeStart, timeRangeEnd, numberDays, minNumberSeats, minPrice, maxPrice, carType, onlyVollkasko, minFreeKilometer)
+	aggs := required_ofs.FilterAggregations( minNumberSeats, minPrice, maxPrice, carType, onlyVollkasko, minFreeKilometer)
 
 	optional_ofs := aggs.OptionalAgg
 
