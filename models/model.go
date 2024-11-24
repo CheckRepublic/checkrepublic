@@ -1,8 +1,10 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
-// import "github.com/google/uuid"
+const msFactor = 24 * 60 * 60 * 1000
 
 type Offers struct {
 	Offers []*Offer `json:"offers"`
@@ -40,40 +42,16 @@ type Offer struct {
 	FreeKilometers       uint64    `json:"freeKilometers"`
 }
 
-func (offers *Offers) FilterByRegion(regionId uint64) (ret *Offers) {
+func (offers *Offers) FilterMandatory(start uint64, end uint64, num uint64) (ret *Offers) {
 	ret = &Offers{}
-	validRegions := RegionIdToMostSpecificRegionId[int32(regionId)]
 
 	for _, offer := range offers.Offers {
-		for _, validRegion := range validRegions {
-			if offer.MostSpecificRegionID == uint64(validRegion) {
+		// Check start and end date
+		if offer.StartDate >= start && offer.EndDate <= end {
+			// Check number of days
+			if offer.EndDate-offer.StartDate == num*msFactor {
 				ret.Offers = append(ret.Offers, offer)
 			}
-		}
-	}
-
-	return ret
-}
-
-func (offers *Offers) FilterByTimeRange(start uint64, end uint64) (ret *Offers) {
-	ret = &Offers{}
-
-	for _, offer := range offers.Offers {
-		if offer.StartDate >= start && offer.EndDate <= end {
-			ret.Offers = append(ret.Offers, offer)
-		}
-	}
-
-	return ret
-}
-
-func (offers *Offers) FilterByNumberDays(num uint64) (ret *Offers) {
-	ret = &Offers{}
-
-	// The number of full days (24h) the car is available within the rangeStart and rangeEnd
-	for _, offer := range offers.Offers {
-		if offer.EndDate-offer.StartDate == num*24*60*60*1000 {
-			ret.Offers = append(ret.Offers, offer)
 		}
 	}
 
