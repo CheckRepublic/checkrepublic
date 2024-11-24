@@ -29,8 +29,6 @@ func (m *MemoryDB) CreateOffers(ctx context.Context, offers ...*models.Offer) er
 		}
 	}
 
-	slog.Info("RegionIdToOffers: {}", m.regionIdToOffers)
-
 	return nil
 }
 
@@ -166,6 +164,7 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 
 func (m *MemoryDB) DeleteAllOffers(ctx context.Context) error {
 	m.db = []*models.Offer{}
+	m.regionIdToOffers = make(map[int32][]*models.Offer)
 
 	return nil
 }
