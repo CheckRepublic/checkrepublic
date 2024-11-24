@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: http://localhost:3000/api/offers?regionID=0&timeRangeStart=0&timeRangeEnd=8732449600000&numberDays=1&sortOrder=price-asc&page=0&pageSize=5&priceRangeWidth=5000&minFreeKilometerWidth=100
+  url: http://localhost:3000/api/offers?regionID=0&timeRangeStart=0&timeRangeEnd=8732449600000&numberDays=100&sortOrder=price-asc&page=0&pageSize=20&priceRangeWidth=5000&minFreeKilometerWidth=100
   body: none
   auth: none
 }
@@ -14,10 +14,16 @@ params:query {
   regionID: 0
   timeRangeStart: 0
   timeRangeEnd: 8732449600000
-  numberDays: 1
+  numberDays: 100
   sortOrder: price-asc
   page: 0
-  pageSize: 5
+  pageSize: 20
   priceRangeWidth: 5000
   minFreeKilometerWidth: 100
+  ~minNumberSeats: 5
+  ~minPrice: 1000
+  ~maxPrice: 10000
+  ~carType: small
+  ~onlyVollkasko: false
+  ~minFreeKilometer: 500
 }

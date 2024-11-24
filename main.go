@@ -4,12 +4,15 @@ import (
 	"check_republic/db"
 	"check_republic/models"
 	"fmt"
+	"io"
+	"log"
+	"log/slog"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
+	"github.com/gin-gonic/gin"
 
 	_ "go.uber.org/automaxprocs"
 )
@@ -19,7 +22,7 @@ var LogToFile = os.Getenv("LOG") == "true"
 
 func main() {
 	if os.Getenv("DEBUG") == "true" {
-		log.SetLevel(log.LevelDebug)
+		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
 
 	models.InitRegions()
@@ -27,36 +30,50 @@ func main() {
 	// db.InitPostgres()
 	db.InitMemoryDB()
 
-	app := fiber.New()
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+	r.Use(gin.ErrorLogger())
+	r.Use(gin.Recovery())
 
-	app.Get("/api/offers", getHandler)
-	app.Get("/api/offers/all", getAllHandler)
-	app.Post("/api/offers", postHandler)
-	app.Delete("/api/offers", deleteHandler)
+	// Increase allowed body size
+	r.Use(func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 3*1024*1024*1024) // 3GB
+		c.Next()
+	})
 
-	log.Fatal(app.Listen(":3000"))
+	r.GET("/api/offers", getHandler)
+	r.GET("/api/offers/all", getAllHandler)
+	r.POST("/api/offers", postHandler)
+	r.DELETE("/api/offers", deleteHandler)
+
+	log.Panic(r.Run(":3000"))
 }
 
 // Slow, ugly but a bare necessity - kill with fire as soon as possible
-func debugHelper(c *fiber.Ctx) {
+func debugHelper(c *gin.Context) {
 	// Query Type
-	queryMethod := c.Method()
+	queryMethod := c.Request.Method
 
-	if queryMethod == "GET" {
+	switch queryMethod {
+	case "GET":
 		// Append request params to a file
-		writeGet(c.Queries())
-	}
-	if queryMethod == "POST" {
+		writeGet(c.Request.URL.Query())
+	case "POST":
 		// Append request body to a file
-		writePost(c.Body())
-	}
-	if queryMethod == "DELETE" {
+		// Read request body and append to a file
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			slog.Error("Error reading request body", "error", err)
+			return
+		}
+		writePost(body)
+	case "DELETE":
 		// New test case - create a new file
 		filename = time.Now().String()
 	}
 }
 // writeGet appends the query parameters to a file
-func writeGet(queryParams map[string]string) {
+func writeGet(queryParams map[string][]string) {
 	// Create the content to be written to the file
 	content := fmt.Sprintf("Query Params: %v\n", queryParams)
 
@@ -87,81 +104,91 @@ func writePost(body []byte) {
 	}
 }
 
-func getAllHandler(c *fiber.Ctx) error {
-	return c.JSON(db.DB.GetAllOffers(c.Context()))
+func getAllHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, db.DB.GetAllOffers(c.Request.Context()))
+	return
 }
 
-func postHandler(c *fiber.Ctx) error {
+
+func postHandler(c *gin.Context) {
 	if LogToFile {
 		debugHelper(c)
 	}
 	var offer models.Offers
 
 	// Parse the request body
-	if err := c.BodyParser(&offer); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+	if err := c.ShouldBindJSON(&offer); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
-	db.DB.CreateOffers(c.Context(), offer.Offers...)
-	return c.SendString("Offer created")
+	db.DB.CreateOffers(c.Request.Context(), offer.Offers...)
+	c.String(http.StatusCreated, "Offer created")
 }
 
-func getHandler(c *fiber.Ctx) error {
+func getHandler(c *gin.Context) {
 	if LogToFile {
 		debugHelper(c)
 	}
 	regionIDParam := c.Query("regionID")
 	if regionIDParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("regionID is required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "regionID is required"})
+		return
 	}
 	regionID, _ := strconv.ParseUint(regionIDParam, 10, 64)
 
 	timeRangeStartParam := c.Query("timeRangeStart")
 	if timeRangeStartParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("timeRangeStart is required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "timeRangeStart is required"})
+		return
 	}
 	timeRangeStart, _ := strconv.ParseUint(timeRangeStartParam, 10, 64)
 
 	timeRangeEndParam := c.Query("timeRangeEnd")
 	if timeRangeEndParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("timeRangeEnd is required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "timeRangeEnd is required"})
+		return
 	}
 	timeRangeEnd, _ := strconv.ParseUint(timeRangeEndParam, 10, 64)
 
 	numberDaysParam := c.Query("numberDays")
 	if numberDaysParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("numberDays is required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "numberDays is required"})
+		return
 	}
 	numberDays, _ := strconv.ParseUint(numberDaysParam, 10, 64)
 
 	sortOrderParam := c.Query("sortOrder")
 	if sortOrderParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("sortOrder is required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "sortOrder is required"})
+		return
 	}
 
 	pageParam := c.Query("page")
 	if pageParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("page is required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "page is required"})
+		return
 	}
 	page, _ := strconv.ParseUint(pageParam, 10, 64)
 
 	pageSizeParam := c.Query("pageSize")
 	if pageSizeParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("pageSize is required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "pageSize is required"})
+		return
 	}
 	pageSize, _ := strconv.ParseUint(pageSizeParam, 10, 64)
 
 	priceRangeWidthParam := c.Query("priceRangeWidth")
 	if priceRangeWidthParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("priceRangeWidth is required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "priceRangeWidth is required"})
+		return
 	}
 	priceRangeWidth, _ := strconv.ParseUint(priceRangeWidthParam, 10, 32)
 
 	minFreeKilometerWidthParam := c.Query("minFreeKilometerWidth")
 	if minFreeKilometerWidthParam == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("minFreeKilometerWidth is required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "minFreeKilometerWidth is required"})
+		return
 	}
 	minFreeKilometerWidth, _ := strconv.ParseUint(minFreeKilometerWidthParam, 10, 32)
 
@@ -218,7 +245,7 @@ func getHandler(c *fiber.Ctx) error {
 		minFreeKilometer = &parsed
 	}
 
-	offers := db.DB.GetFilteredOffers(c.Context(),
+	offers := db.DB.GetFilteredOffers(c.Request.Context(),
 		regionID,
 		timeRangeStart,
 		timeRangeEnd,
@@ -235,14 +262,13 @@ func getHandler(c *fiber.Ctx) error {
 		onlyVollkasko,
 		minFreeKilometer)
 
-	return c.JSON(offers)
+	c.JSON(http.StatusOK, offers)
 }
 
-func deleteHandler(c *fiber.Ctx) error {
+func deleteHandler(c *gin.Context) {
 	if LogToFile {
 		debugHelper(c)
 	}
-
-	db.DB.DeleteAllOffers(c.Context())
-	return c.SendString("All offers deleted")
+	db.DB.DeleteAllOffers(c.Request.Context())
+	c.String(http.StatusOK, "All offers deleted")
 }
