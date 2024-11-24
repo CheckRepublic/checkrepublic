@@ -42,26 +42,17 @@ type Offer struct {
 	FreeKilometers       uint64    `json:"freeKilometers"`
 }
 
-func (offers *Offers) FilterMandatory(regionId uint64, start uint64, end uint64, num uint64) (ret *Offers) {
-	ret = &Offers{}
-	validRegions := RegionIdToMostSpecificRegionId[int32(regionId)]
-
+func (offers *Offers) FilterMandatory(start uint64, end uint64, num uint64) (ret *Offers) {
+	tmp_offers := make([]*Offer, 0, len(offers.Offers)/2)
+	n := num * msFactor
 	for _, offer := range offers.Offers {
-		for _, validRegion := range validRegions {
-			// Check regions
-			if offer.MostSpecificRegionID == uint64(validRegion) {
-				// Check start and end date
-				if offer.StartDate >= start && offer.EndDate <= end {
-					// Check number of days
-					if offer.EndDate-offer.StartDate == num*msFactor {
-						ret.Offers = append(ret.Offers, offer)
-					}
-				}
-			}
+		// Check number of days
+		if offer.EndDate-offer.StartDate == n && offer.StartDate >= start && offer.EndDate <= end {
+			tmp_offers = append(tmp_offers, offer)
 		}
 	}
 
-	return ret
+	return &Offers{Offers: tmp_offers}
 }
 
 type Aggregations struct {
@@ -75,12 +66,18 @@ type Aggregations struct {
 
 func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) (ret *Aggregations) {
 	ret = &Aggregations{
-		PricesAgg:      &Offers{},
-		FreeKmAgg:      &Offers{},
+		PricesAgg:      &Offers{
+      Offers: make([]*Offer, 0, len(offers.Offers)/2),
+    },
+		FreeKmAgg:      &Offers{
+      Offers: make([]*Offer, 0, len(offers.Offers)/2),
+    },
 		CarTypeCount:   CarTypeCount{},
 		VollKaskoCount: VollkaskoCount{},
 		SeatsCount:     SeatsSummary{},
-		OptionalAgg:    &Offers{},
+		OptionalAgg:    &Offers{
+      Offers: make([]*Offer, 0, len(offers.Offers)/2),
+    },
 	}
 
 	for _, offer := range offers.Offers {
