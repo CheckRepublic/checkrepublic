@@ -46,7 +46,6 @@ func main() {
 	r.Use(gzip.Gzip(gzip.BestSpeed))
 
 	r.GET("/api/offers", getHandler)
-	r.GET("/api/offers/all", getAllHandler)
 	r.POST("/api/offers", postHandler)
 	r.DELETE("/api/offers", deleteHandler)
 
@@ -107,11 +106,6 @@ func writePost(body []byte) {
 	if _, err := f.Write(body); err != nil {
 		slog.Error("Error writing to file")
 	}
-}
-
-func getAllHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, db.DB.GetAllOffers(c.Request.Context()))
-	return
 }
 
 func postHandler(c *gin.Context) {
