@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const msFactor = 24 * 60 * 60 * 1000
+const MsFactor = 24 * 60 * 60 * 1000
 
 type Offers struct {
 	Offers []*Offer `json:"offers"`
@@ -35,6 +35,7 @@ type Offer struct {
 	MostSpecificRegionID uint64    `json:"mostSpecificRegionID" db:"region_id"`
 	StartDate            uint64    `json:"startDate"`
 	EndDate              uint64    `json:"endDate"`
+	NumberDays           uint64    `json:"-"`
 	NumberSeats          uint64    `json:"numberSeats"`
 	Price                uint64    `json:"price"`
 	CarType              string    `json:"carType"`
@@ -44,10 +45,9 @@ type Offer struct {
 
 func (offers *Offers) FilterMandatory(start uint64, end uint64, num uint64) (ret *Offers) {
 	tmp_offers := make([]*Offer, 0, len(offers.Offers)/2)
-	n := num * msFactor
 	for _, offer := range offers.Offers {
 		// Check number of days
-		if offer.EndDate-offer.StartDate == n && offer.StartDate >= start && offer.EndDate <= end {
+		if offer.NumberDays == num && offer.StartDate >= start && offer.EndDate <= end {
 			tmp_offers = append(tmp_offers, offer)
 		}
 	}

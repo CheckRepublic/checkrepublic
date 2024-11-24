@@ -29,6 +29,7 @@ func (m *MemoryDB) CreateOffers(ctx context.Context, offers ...*models.Offer) er
 	defer m.rwlock.Unlock()
 
 	for _, offer := range offers {
+		offer.NumberDays = (offer.EndDate - offer.StartDate) / models.MsFactor
 		m.db = append(m.db, offer)
 		for _, anchecstor := range models.SpecificRegionToAnchestor[int32(offer.MostSpecificRegionID)] {
 			m.regionIdToOffers[anchecstor] = append(m.regionIdToOffers[anchecstor], offer)
