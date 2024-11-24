@@ -43,15 +43,14 @@ type Offer struct {
 }
 
 func (offers *Offers) FilterMandatory(start uint64, end uint64, num uint64) (ret *Offers) {
-	ret = &Offers{}
+	ret = &Offers{
+		Offers: make([]*Offer, 0, len(offers.Offers)/2),
+	}
 	n := num * msFactor
 	for _, offer := range offers.Offers {
 		// Check number of days
-		if offer.EndDate-offer.StartDate == n {
-			// Check start and end date
-			if offer.StartDate >= start && offer.EndDate <= end {
-				ret.Offers = append(ret.Offers, offer)
-			}
+		if offer.EndDate-offer.StartDate == n && offer.StartDate >= start && offer.EndDate <= end {
+			ret.Offers = append(ret.Offers, offer)
 		}
 	}
 
@@ -69,12 +68,24 @@ type Aggregations struct {
 
 func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) (ret *Aggregations) {
 	ret = &Aggregations{
-		PricesAgg:    &Offers{},
-		FreeKmAgg:    &Offers{},
-		CarTypeAgg:   &Offers{},
-		VollKaskoAgg: &Offers{},
-		SeatsAgg:     &Offers{},
-		OptionalAgg:  &Offers{},
+		PricesAgg: &Offers{
+			Offers: make([]*Offer, 0, len(offers.Offers)/2),
+		},
+		FreeKmAgg: &Offers{
+			Offers: make([]*Offer, 0, len(offers.Offers)/2),
+		},
+		CarTypeAgg: &Offers{
+			Offers: make([]*Offer, 0, len(offers.Offers)/2),
+		},
+		VollKaskoAgg: &Offers{
+			Offers: make([]*Offer, 0, len(offers.Offers)/2),
+		},
+		SeatsAgg: &Offers{
+			Offers: make([]*Offer, 0, len(offers.Offers)/2),
+		},
+		OptionalAgg: &Offers{
+			Offers: make([]*Offer, 0, len(offers.Offers)/2),
+		},
 	}
 
 	for _, offer := range offers.Offers {

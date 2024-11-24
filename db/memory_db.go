@@ -95,7 +95,7 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 	// Slice the offers list for pagination
 	paginatedOffers := optional_ofs.Offers[startIndex:endIndex]
 
-	var dto_offers []*models.OfferDTO
+	var dto_offers = make([]*models.OfferDTO, 0, len(paginatedOffers))
 	for _, offer := range paginatedOffers {
 		dto_offers = append(dto_offers, &models.OfferDTO{
 			ID:   offer.ID.String(),
@@ -118,7 +118,7 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 		return seatsCountSlice[i].NumberSeats < seatsCountSlice[j].NumberSeats
 	})
 
-	transformedPricesRange := []models.HistogramRange{}
+	transformedPricesRange := make([]models.HistogramRange, 0, len(pricesRange))
 	for _, offer := range pricesRange {
 		transformedPricesRange = append(transformedPricesRange, models.HistogramRange{
 			Start: offer.Start,
@@ -127,7 +127,7 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 		})
 	}
 
-	transformedKmRange := []models.HistogramRange{}
+	transformedKmRange := make([]models.HistogramRange, 0, len(freeKilometerRange))
 	for _, offer := range freeKilometerRange {
 		transformedKmRange = append(transformedKmRange, models.HistogramRange{
 			Start: offer.Start,
