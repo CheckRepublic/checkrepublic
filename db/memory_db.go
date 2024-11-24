@@ -2,6 +2,7 @@ package db
 
 import (
 	"check_republic/models"
+	"container/heap"
 	"context"
 	"log/slog"
 	"sort"
@@ -50,34 +51,27 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 	required_ofs := ofs.FilterMandatory(timeRangeStart, timeRangeEnd, numberDays)
 
 	// Optional filters
-	aggs := required_ofs.FilterAggregations(minNumberSeats, minPrice, maxPrice, carType, onlyVollkasko, minFreeKilometer)
+	aggs := required_ofs.FilterAggregations(minNumberSeats, minPrice, maxPrice, carType, onlyVollkasko, minFreeKilometer, sortOrder == "price-asc")
 
 	optional_ofs := aggs.OptionalAgg
 
 	pricesRange := models.BucketizeOffersByPrice(aggs.PricesAgg.Offers, priceRangeWidth)
 	freeKilometerRange := models.BucketizeOffersByKilometer(aggs.FreeKmAgg.Offers, minFreeKilometerWidth)
 
-	// Sorting
-	if sortOrder == "price-asc" {
-		sort.Sort(models.ByPrice{Offers: optional_ofs.Offers, Asc: true})
-	} else if sortOrder == "price-desc" {
-		sort.Sort(models.ByPrice{Offers: optional_ofs.Offers, Asc: false})
-	}
-
 	// Calculate the starting and ending indices for pagination
 	startIndex := page * pageSize
 	endIndex := startIndex + pageSize
+	paginatedOffers := []*models.Offer{}
+	for i := 0; i < int(endIndex); i++ {
+		if (optional_ofs.Len() == 0){
+			break
+		}
+		if i < int(startIndex) {
+			continue
+		}
 
-	// Ensure indices are within bounds
-	if startIndex > uint64(len(optional_ofs.Offers)) {
-		startIndex = uint64(len(optional_ofs.Offers))
+		paginatedOffers = append(paginatedOffers, heap.Pop(optional_ofs).(*models.Offer))
 	}
-	if endIndex > uint64(len(optional_ofs.Offers)) {
-		endIndex = uint64(len(optional_ofs.Offers))
-	}
-
-	// Slice the offers list for pagination
-	paginatedOffers := optional_ofs.Offers[startIndex:endIndex]
 
 	var dto_offers = make([]*models.OfferDTO, 0, len(paginatedOffers))
 	for _, offer := range paginatedOffers {

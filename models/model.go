@@ -1,6 +1,8 @@
 package models
 
 import (
+	"container/heap"
+
 	"github.com/google/uuid"
 )
 
@@ -61,24 +63,30 @@ type Aggregations struct {
 	CarTypeCount   CarTypeCount
 	VollKaskoCount VollkaskoCount
 	SeatsCount     SeatsSummary
-	OptionalAgg    *Offers
+	OptionalAgg    heap.Interface
 }
 
-func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) (ret *Aggregations) {
+func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64, asc bool) (ret *Aggregations) {
 	ret = &Aggregations{
-		PricesAgg:      &Offers{
-      Offers: make([]*Offer, 0, len(offers.Offers)/2),
-    },
-		FreeKmAgg:      &Offers{
-      Offers: make([]*Offer, 0, len(offers.Offers)/2),
-    },
+		PricesAgg: &Offers{
+			Offers: make([]*Offer, 0, len(offers.Offers)/2),
+		},
+		FreeKmAgg: &Offers{
+			Offers: make([]*Offer, 0, len(offers.Offers)/2),
+		},
 		CarTypeCount:   CarTypeCount{},
 		VollKaskoCount: VollkaskoCount{},
 		SeatsCount:     SeatsSummary{},
-		OptionalAgg:    &Offers{
-      Offers: make([]*Offer, 0, len(offers.Offers)/2),
-    },
+		OptionalAgg:    nil,
 	}
+
+
+	if asc {
+		ret.OptionalAgg = &MinHeap{}
+	} else {
+		ret.OptionalAgg = &MaxHeap{}
+	}
+	heap.Init(ret.OptionalAgg)
 
 	for _, offer := range offers.Offers {
 		// For prices aggregation
@@ -127,7 +135,7 @@ func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, max
 			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) &&
 			(carType == nil || offer.CarType == *carType) &&
 			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
-			ret.OptionalAgg.Offers = append(ret.OptionalAgg.Offers, offer)
+			heap.Push(ret.OptionalAgg, offer)
 		}
 
 	}
