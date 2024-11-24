@@ -9,7 +9,6 @@ import (
 )
 
 type MemoryDB struct {
-	db []*models.Offer
 	// takes a inner node region and returns all leaf offers in leaf regions
 	regionIdToOffers map[int32][]*models.Offer
 	rwlock           *sync.RWMutex
@@ -17,7 +16,6 @@ type MemoryDB struct {
 
 func InitMemoryDB() {
 	DB = MemoryDB{
-		db:               make([]*models.Offer, 0, 1000000),
 		regionIdToOffers: make(map[int32][]*models.Offer),
 		rwlock:           &sync.RWMutex{},
 	}
@@ -30,17 +28,12 @@ func (m *MemoryDB) CreateOffers(ctx context.Context, offers ...*models.Offer) er
 
 	for _, offer := range offers {
 		offer.NumberDays = (offer.EndDate - offer.StartDate) / models.MsFactor
-		m.db = append(m.db, offer)
 		for _, anchecstor := range models.SpecificRegionToAnchestor[int32(offer.MostSpecificRegionID)] {
 			m.regionIdToOffers[anchecstor] = append(m.regionIdToOffers[anchecstor], offer)
 		}
 	}
 
 	return nil
-}
-
-func (m *MemoryDB) GetAllOffers(ctx context.Context) models.Offers {
-	return models.Offers{Offers: m.db}
 }
 
 func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeRangeStart uint64, timeRangeEnd uint64, numberDays uint64, sortOrder string, page uint64, pageSize uint64, priceRangeWidth uint32, minFreeKilometerWidth uint32, minNumberSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) models.DTO {
@@ -126,7 +119,6 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 }
 
 func (m *MemoryDB) DeleteAllOffers(ctx context.Context) error {
-	m.db = make([]*models.Offer, 0, 1000000)
 	m.regionIdToOffers = make(map[int32][]*models.Offer)
 
 	return nil

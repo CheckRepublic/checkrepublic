@@ -13,7 +13,6 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 
-	_ "go.uber.org/automaxprocs"
 )
 
 var filename = time.Now().String()
