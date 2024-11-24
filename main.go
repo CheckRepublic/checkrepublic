@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 
 	_ "go.uber.org/automaxprocs"
@@ -40,6 +41,9 @@ func main() {
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 3*1024*1024*1024) // 3GB
 		c.Next()
 	})
+
+	// Gzip compression
+	r.Use(gzip.Gzip(gzip.BestSpeed))
 
 	r.GET("/api/offers", getHandler)
 	r.GET("/api/offers/all", getAllHandler)
