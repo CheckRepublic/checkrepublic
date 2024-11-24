@@ -6,32 +6,29 @@ import (
 
 const msFactor = 24 * 60 * 60 * 1000
 
-type Offers struct {
-	Offers []*Offer `json:"offers"`
-}
+type Offers []*OfferInMemory
 
 type ByPrice struct {
-	Offers []*Offer
+	Offers *Offers
 	Asc    bool
 }
 
-func (a ByPrice) Len() int      { return len(a.Offers) }
-func (a ByPrice) Swap(i, j int) { a.Offers[i], a.Offers[j] = a.Offers[j], a.Offers[i] }
+func (a ByPrice) Len() int      { return len(*a.Offers) }
+func (a ByPrice) Swap(i, j int) { (*a.Offers)[i], (*a.Offers)[j] = (*a.Offers)[j], (*a.Offers)[i] }
 func (a ByPrice) Less(i, j int) bool {
-	if a.Offers[i].Price == a.Offers[j].Price {
-		return a.Offers[i].ID.String() < a.Offers[j].ID.String()
+	if (*a.Offers)[i].Price == (*a.Offers)[j].Price {
+		return (*a.Offers)[i].ID.String() < (*a.Offers)[j].ID.String()
 	}
 
 	if !a.Asc {
-		return a.Offers[i].Price > a.Offers[j].Price
+		return (*a.Offers)[i].Price > (*a.Offers)[j].Price
 	}
-	return a.Offers[i].Price < a.Offers[j].Price
+	return (*a.Offers)[i].Price < (*a.Offers)[j].Price
 }
 
-// Offer represents the offer details.
-type Offer struct {
+// OfferInMemory represents the offer details.
+type OfferInMemory struct {
 	ID                   uuid.UUID `json:"ID"`
-	Data                 string    `json:"data"`
 	MostSpecificRegionID uint64    `json:"mostSpecificRegionID" db:"region_id"`
 	StartDate            uint64    `json:"startDate"`
 	EndDate              uint64    `json:"endDate"`
@@ -46,7 +43,7 @@ func (offers *Offers) FilterMandatory(regionId uint64, start uint64, end uint64,
 	ret = &Offers{}
 	validRegions := RegionIdToMostSpecificRegionId[int32(regionId)]
 
-	for _, offer := range offers.Offers {
+	for _, offer := range *offers {
 		for _, validRegion := range validRegions {
 			// Check regions
 			if offer.MostSpecificRegionID == uint64(validRegion) {
@@ -54,7 +51,7 @@ func (offers *Offers) FilterMandatory(regionId uint64, start uint64, end uint64,
 				if offer.StartDate >= start && offer.EndDate <= end {
 					// Check number of days
 					if offer.EndDate-offer.StartDate == num*msFactor {
-						ret.Offers = append(ret.Offers, offer)
+						*ret = append(*ret, offer)
 					}
 				}
 			}
@@ -83,13 +80,13 @@ func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, max
 		OptionalAgg:    &Offers{},
 	}
 
-	for _, offer := range offers.Offers {
+	for _, offer := range *offers {
 		// For prices aggregation
 		if (numSeats == nil || offer.NumberSeats >= *numSeats) &&
 			(carType == nil || offer.CarType == *carType) &&
 			(onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
 			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) {
-			ret.PricesAgg.Offers = append(ret.PricesAgg.Offers, offer)
+			*ret.PricesAgg = append(*ret.PricesAgg, offer)
 		}
 
 		// For free km aggregation
@@ -97,7 +94,7 @@ func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, max
 			(carType == nil || offer.CarType == *carType) &&
 			(onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
 			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
-			ret.FreeKmAgg.Offers = append(ret.FreeKmAgg.Offers, offer)
+			*ret.FreeKmAgg = append(*ret.FreeKmAgg, offer)
 		}
 
 		// For car type aggregation
@@ -130,7 +127,7 @@ func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, max
 			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) &&
 			(carType == nil || offer.CarType == *carType) &&
 			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
-			ret.OptionalAgg.Offers = append(ret.OptionalAgg.Offers, offer)
+			*ret.OptionalAgg = append(*ret.OptionalAgg, offer)
 		}
 
 	}

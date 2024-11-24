@@ -11,7 +11,7 @@ type HistogramRange struct {
 
 type Bucket HistogramRange
 
-func BucketizeOffersByPrice(offers []*Offer, width uint32) []Bucket {
+func BucketizeOffersByPrice(offers *Offers, width uint32) []Bucket {
 	if width == 0 {
 		panic("Width must be greater than 0")
 	}
@@ -19,7 +19,7 @@ func BucketizeOffersByPrice(offers []*Offer, width uint32) []Bucket {
 	bucketMap := make(map[uint32]*Bucket)
 
 	// Distribute offers into buckets
-	for _, offer := range offers {
+	for _, offer := range *offers {
 		start := uint32(offer.Price) / width * width
 		end := start + width
 
@@ -45,7 +45,7 @@ func BucketizeOffersByPrice(offers []*Offer, width uint32) []Bucket {
 	return buckets
 }
 
-func BucketizeOffersByKilometer(offers []*Offer, width uint32) []Bucket {
+func BucketizeOffersByKilometer(offers *Offers, width uint32) []Bucket {
 	if width == 0 {
 		panic("Width must be greater than 0")
 	}
@@ -53,7 +53,7 @@ func BucketizeOffersByKilometer(offers []*Offer, width uint32) []Bucket {
 	bucketMap := make(map[uint32]*Bucket)
 
 	// Distribute offers into buckets
-	for _, offer := range offers {
+	for _, offer := range *offers {
 		start := uint32(offer.FreeKilometers) / width * width
 		end := start + width
 

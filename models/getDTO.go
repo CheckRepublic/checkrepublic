@@ -1,5 +1,10 @@
 package models
 
+type PostOfferDTO struct {
+	OfferInMemory
+	Data string `json:"data"`
+}
+
 type OfferDTO struct {
 	ID   string `json:"ID"`
 	Data string `json:"data"`

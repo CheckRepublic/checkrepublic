@@ -46,7 +46,6 @@ func main() {
 	r.Use(gzip.Gzip(gzip.BestSpeed))
 
 	r.GET("/api/offers", getHandler)
-	r.GET("/api/offers/all", getAllHandler)
 	r.POST("/api/offers", postHandler)
 	r.DELETE("/api/offers", deleteHandler)
 
@@ -109,25 +108,23 @@ func writePost(body []byte) {
 	}
 }
 
-func getAllHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, db.DB.GetAllOffers(c.Request.Context()))
-	return
-}
-
 func postHandler(c *gin.Context) {
 	if LogToFile {
 		debugHelper(c)
 	}
-	var offer models.Offers
+
+	var post_offer struct {
+		Offers []models.PostOfferDTO `json:"offers"`
+	}
 
 	// Parse the request body
-	if err := c.ShouldBindJSON(&offer); err != nil {
+	if err := c.ShouldBindJSON(&post_offer); err != nil {
 		slog.Error("Error parsing request body", "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err := db.DB.CreateOffers(c.Request.Context(), offer.Offers...)
+	err := db.DB.CreateOffers(c.Request.Context(), post_offer.Offers...)
 	if err != nil {
 		slog.Error("Error creating offers", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
