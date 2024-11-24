@@ -1,12 +1,16 @@
 package models
 
 import (
-	"encoding/json"
 	"log"
+	"os"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
 type Region struct {
-	Id         int32   `json:"id"`
+	Id         int32    `json:"id"`
 	Name       string   `json:"name"`
 	SubRegions []Region `json:"subRegions"`
 }
