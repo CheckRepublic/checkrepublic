@@ -2,7 +2,6 @@ package models
 
 import (
 	"log"
-	"os"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -15,46 +14,31 @@ type Region struct {
 	SubRegions []Region `json:"subRegions"`
 }
 
-var RegionIdToMostSpecificRegionId map[int32][]int32
+var SpecificRegionToAnchestor map[int32][]int32
 
 func InitRegions() {
-	// var RegionTree Region = readRegions("./models/regions.json")
 	var region Region
 	if err := json.Unmarshal([]byte(jsonRegion), &region); err != nil {
 		log.Fatalf("failed to unmarshal JSON: %v", err)
 	}
-	RegionIdToMostSpecificRegionId = make(map[int32][]int32)
-	region.ToLeafMap(RegionIdToMostSpecificRegionId)
-	// log.Printf("regionIdToMostSpecificRegionId: %v", RegionIdToMostSpecificRegionId)
+
+	SpecificRegionToAnchestor = make(map[int32][]int32)
+	region.ToAncestorMap(SpecificRegionToAnchestor, []int32{})
 }
 
-func (region *Region) ToLeafMap(leafMap map[int32][]int32) {
+func (region *Region) ToAncestorMap(ancestorMap map[int32][]int32, ancestors []int32) {
+	currentAncestors := append([]int32{}, ancestors...) // Copy the current ancestors
+	currentAncestors = append(currentAncestors, region.Id)
+
 	if len(region.SubRegions) == 0 {
 		// It's a leaf node
-		leafMap[region.Id] = []int32{region.Id}
+		ancestorMap[region.Id] = currentAncestors
 	} else {
 		// It's an inner node
-		var leaves []int32
 		for _, subRegion := range region.SubRegions {
-			subRegion.ToLeafMap(leafMap)
-			leaves = append(leaves, leafMap[subRegion.Id]...)
+			subRegion.ToAncestorMap(ancestorMap, currentAncestors)
 		}
-		leafMap[region.Id] = leaves
 	}
-}
-
-func readRegions(filePath string) Region {
-	byteValue, err := os.ReadFile(filePath)
-	if err != nil {
-		log.Fatalf("failed to read file: %v", err)
-	}
-
-	var region Region
-	if err := json.Unmarshal(byteValue, &region); err != nil {
-		log.Fatalf("failed to unmarshal JSON: %v", err)
-	}
-
-	return region
 }
 
 const jsonRegion = `{
