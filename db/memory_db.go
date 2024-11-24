@@ -44,10 +44,7 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 	defer m.rwlock.RUnlock()
 
 	ofs := &models.Offers{Offers: m.db}
-	required_ofs := ofs.
-		FilterByRegion(regionID).
-		FilterByTimeRange(timeRangeStart, timeRangeEnd).
-		FilterByNumberDays(numberDays)
+	required_ofs := ofs.FilterMandatory(regionID, timeRangeStart, timeRangeEnd, numberDays)
 
 	// Optional filters
 	optional_ofs := required_ofs.
