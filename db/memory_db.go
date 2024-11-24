@@ -45,9 +45,8 @@ func (m *MemoryDB) GetAllOffers(ctx context.Context) models.Offers {
 
 func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeRangeStart uint64, timeRangeEnd uint64, numberDays uint64, sortOrder string, page uint64, pageSize uint64, priceRangeWidth uint32, minFreeKilometerWidth uint32, minNumberSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) models.DTO {
 	m.rwlock.RLock()
-	defer m.rwlock.RUnlock()
-
 	ofs := &models.Offers{Offers: m.regionIdToOffers[int32(regionID)]}
+	m.rwlock.RUnlock()
 	required_ofs := ofs.FilterMandatory(timeRangeStart, timeRangeEnd, numberDays)
 
 	// Optional filters
