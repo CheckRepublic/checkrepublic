@@ -17,7 +17,7 @@ type MemoryDB struct {
 
 func InitMemoryDB() {
 	DB = MemoryDB{
-		db:               []*models.Offer{},
+		db:               make([]*models.Offer, 0, 1000000),
 		regionIdToOffers: make(map[int32][]*models.Offer),
 		rwlock:           &sync.RWMutex{},
 	}
@@ -125,7 +125,7 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 }
 
 func (m *MemoryDB) DeleteAllOffers(ctx context.Context) error {
-	m.db = []*models.Offer{}
+	m.db = make([]*models.Offer, 0, 1000000)
 	m.regionIdToOffers = make(map[int32][]*models.Offer)
 
 	return nil
