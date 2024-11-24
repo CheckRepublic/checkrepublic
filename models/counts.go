@@ -114,13 +114,17 @@ func (v *VollkaskoCount) Add(hasVollkasko bool) {
 }
 
 // SeatsCount represents the count of offers by number of seats.
-type SeatsCount map[uint64]uint64
+type KVSeatsCount struct {
+	NumberSeats uint64 `json:"numberSeats"`
+	Count       uint64 `json:"count"`
+}
 
-func (seats *SeatsCount) Add(numberSeats uint64) {
-	if count, ok := (*seats)[numberSeats]; ok {
-		(*seats)[numberSeats] = count + 1
-		return
+type SeatsSummary map[uint64]*KVSeatsCount
+
+func (seats *SeatsSummary) Add(numberSeats uint64) {
+	if s, ok := (*seats)[numberSeats]; ok {
+		s.Count++
 	} else {
-		(*seats)[numberSeats] = 1
+		(*seats)[numberSeats] = &KVSeatsCount{NumberSeats: numberSeats, Count: 1}
 	}
 }

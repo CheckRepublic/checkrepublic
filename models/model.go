@@ -65,22 +65,22 @@ func (offers *Offers) FilterMandatory(regionId uint64, start uint64, end uint64,
 }
 
 type Aggregations struct {
-	PricesAgg    *Offers
-	FreeKmAgg    *Offers
-	CarTypeAgg   *Offers
-	VollKaskoAgg *Offers
-	SeatsAgg     *Offers
-	OptionalAgg  *Offers
+	PricesAgg      *Offers
+	FreeKmAgg      *Offers
+	CarTypeCount   CarTypeCount
+	VollKaskoCount VollkaskoCount
+	SeatsCount     SeatsSummary
+	OptionalAgg    *Offers
 }
 
 func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) (ret *Aggregations) {
 	ret = &Aggregations{
-		PricesAgg:    &Offers{},
-		FreeKmAgg:    &Offers{},
-		CarTypeAgg:   &Offers{},
-		VollKaskoAgg: &Offers{},
-		SeatsAgg:     &Offers{},
-		OptionalAgg:  &Offers{},
+		PricesAgg:      &Offers{},
+		FreeKmAgg:      &Offers{},
+		CarTypeCount:   CarTypeCount{},
+		VollKaskoCount: VollkaskoCount{},
+		SeatsCount:     SeatsSummary{},
+		OptionalAgg:    &Offers{},
 	}
 
 	for _, offer := range offers.Offers {
@@ -105,7 +105,7 @@ func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, max
 			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) &&
 			(onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
 			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
-			ret.CarTypeAgg.Offers = append(ret.CarTypeAgg.Offers, offer)
+			ret.CarTypeCount.Add(offer.CarType)
 		}
 
 		// For vollkasko aggregation
@@ -113,7 +113,7 @@ func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, max
 			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) &&
 			(carType == nil || offer.CarType == *carType) &&
 			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
-			ret.VollKaskoAgg.Offers = append(ret.VollKaskoAgg.Offers, offer)
+			ret.VollKaskoCount.Add(offer.HasVollkasko)
 		}
 
 		// For seats aggregation
@@ -121,7 +121,7 @@ func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, max
 			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) &&
 			(carType == nil || offer.CarType == *carType) &&
 			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
-			ret.SeatsAgg.Offers = append(ret.SeatsAgg.Offers, offer)
+			ret.SeatsCount.Add(offer.NumberSeats)
 		}
 
 		// For optional aggregation
