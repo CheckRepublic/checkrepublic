@@ -66,67 +66,73 @@ type Aggregations struct {
 
 func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) (ret *Aggregations) {
 	ret = &Aggregations{
-		PricesAgg:      &Offers{
-      Offers: make([]*Offer, 0, len(offers.Offers)/2),
-    },
-		FreeKmAgg:      &Offers{
-      Offers: make([]*Offer, 0, len(offers.Offers)/2),
-    },
+		PricesAgg: &Offers{
+			Offers: make([]*Offer, 0, len(offers.Offers)/2),
+		},
+		FreeKmAgg: &Offers{
+			Offers: make([]*Offer, 0, len(offers.Offers)/2),
+		},
 		CarTypeCount:   CarTypeCount{},
 		VollKaskoCount: VollkaskoCount{},
 		SeatsCount:     SeatsSummary{},
-		OptionalAgg:    &Offers{
-      Offers: make([]*Offer, 0, len(offers.Offers)/2),
-    },
+		OptionalAgg: &Offers{
+			Offers: make([]*Offer, 0, len(offers.Offers)/2),
+		},
 	}
 
 	for _, offer := range offers.Offers {
+		var boolSeats = numSeats == nil || offer.NumberSeats >= *numSeats
+		var boolCar = carType == nil || offer.CarType == *carType
+		var boolKasko = onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko
+		var boolFreeKm = minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer
+		var boolPrice = ((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice))
+
 		// For prices aggregation
-		if (numSeats == nil || offer.NumberSeats >= *numSeats) &&
-			(carType == nil || offer.CarType == *carType) &&
-			(onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
-			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) {
+		if boolSeats &&
+			boolCar &&
+			boolKasko &&
+			boolFreeKm {
 			ret.PricesAgg.Offers = append(ret.PricesAgg.Offers, offer)
 		}
 
 		// For free km aggregation
-		if (numSeats == nil || offer.NumberSeats >= *numSeats) &&
-			(carType == nil || offer.CarType == *carType) &&
-			(onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
-			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
+		if boolSeats &&
+			boolCar &&
+			boolKasko &&
+			boolPrice {
 			ret.FreeKmAgg.Offers = append(ret.FreeKmAgg.Offers, offer)
 		}
 
 		// For car type aggregation
-		if (numSeats == nil || offer.NumberSeats >= *numSeats) &&
-			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) &&
-			(onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
-			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
+		if boolSeats &&
+			boolFreeKm &&
+			boolKasko &&
+			boolPrice {
 			ret.CarTypeCount.Add(offer.CarType)
 		}
 
 		// For vollkasko aggregation
-		if (numSeats == nil || offer.NumberSeats >= *numSeats) &&
-			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) &&
-			(carType == nil || offer.CarType == *carType) &&
-			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
+		if boolSeats &&
+			boolFreeKm &&
+			boolCar &&
+			boolPrice {
 			ret.VollKaskoCount.Add(offer.HasVollkasko)
 		}
 
 		// For seats aggregation
-		if (onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
-			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) &&
-			(carType == nil || offer.CarType == *carType) &&
-			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
+		if boolKasko &&
+			boolFreeKm &&
+			boolCar &&
+			boolPrice {
 			ret.SeatsCount.Add(offer.NumberSeats)
 		}
 
 		// For optional aggregation
-		if (numSeats == nil || offer.NumberSeats >= *numSeats) &&
-			(onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
-			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) &&
-			(carType == nil || offer.CarType == *carType) &&
-			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
+		if boolSeats &&
+			boolKasko &&
+			boolFreeKm &&
+			boolCar &&
+			boolPrice {
 			ret.OptionalAgg.Offers = append(ret.OptionalAgg.Offers, offer)
 		}
 
