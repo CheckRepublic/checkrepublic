@@ -46,7 +46,7 @@ func main() {
 	r.POST("/api/offers", postHandler)
 	r.DELETE("/api/offers", deleteHandler)
 
-	log.Panic(r.Run(":3000"))
+	log.Panic(r.Run(":80"))
 }
 
 // Slow, ugly but a bare necessity - kill with fire as soon as possible
@@ -80,13 +80,13 @@ func writeGet(queryParams map[string][]string) {
 	// Append the content to the file
 	f, err := os.OpenFile("result/GET_"+filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Error("Error opening file")
+		slog.Error("Error opening file")
 		return
 	}
 	defer f.Close()
 
 	if _, err := f.WriteString(content); err != nil {
-		log.Error("Error writing to file")
+		slog.Error("Error writing to file")
 	}
 }
 
@@ -94,13 +94,13 @@ func writePost(body []byte) {
 	// Append the content to the file
 	f, err := os.OpenFile("result/POST_"+filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Error("Error opening file")
+		slog.Error("Error opening file")
 		return
 	}
 	defer f.Close()
 
 	if _, err := f.Write(body); err != nil {
-		log.Error("Error writing to file")
+		slog.Error("Error writing to file")
 	}
 }
 
@@ -111,6 +111,7 @@ func getAllHandler(c *gin.Context) {
 
 
 func postHandler(c *gin.Context) {
+	slog.Info("Post request received")
 	if LogToFile {
 		debugHelper(c)
 	}
@@ -118,15 +119,22 @@ func postHandler(c *gin.Context) {
 
 	// Parse the request body
 	if err := c.ShouldBindJSON(&offer); err != nil {
+		slog.Error("Error parsing request body", "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	db.DB.CreateOffers(c.Request.Context(), offer.Offers...)
+	err :=	db.DB.CreateOffers(c.Request.Context(), offer.Offers...)
+	if err != nil {
+		slog.Error("Error creating offers", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	c.String(http.StatusCreated, "Offer created")
 }
 
 func getHandler(c *gin.Context) {
+	slog.Info("Get request received")
 	if LogToFile {
 		debugHelper(c)
 	}
