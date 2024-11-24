@@ -29,6 +29,8 @@ func (m *MemoryDB) CreateOffers(ctx context.Context, offers ...*models.Offer) er
 		}
 	}
 
+	slog.Info("RegionIdToOffers: {}", m.regionIdToOffers)
+
 	return nil
 }
 

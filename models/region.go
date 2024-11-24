@@ -24,6 +24,7 @@ func InitRegions() {
 
 	SpecificRegionToAnchestor = make(map[int32][]int32)
 	region.ToAncestorMap(SpecificRegionToAnchestor, []int32{})
+	log.Printf("SpecificRegionToAnchestor: %v", SpecificRegionToAnchestor)
 }
 
 func (region *Region) ToAncestorMap(ancestorMap map[int32][]int32, ancestors []int32) {
