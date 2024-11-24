@@ -47,49 +47,26 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 	required_ofs := ofs.FilterMandatory(timeRangeStart, timeRangeEnd, numberDays)
 
 	// Optional filters
-	optional_ofs := required_ofs.
-		FilterByMinSeats(minNumberSeats).
-		FilterByPrice(minPrice, maxPrice).
-		FilterByCarType(carType).
-		FilterByVollkasko(onlyVollkasko).
-		FilterByMinFreeKm(minFreeKilometer)
+	aggs := required_ofs.FilterAggregations(minNumberSeats, minPrice, maxPrice, carType, onlyVollkasko, minFreeKilometer)
+
+	optional_ofs := aggs.OptionalAgg
 
 	carTypeCount := models.CarTypeCount{}
 	onlyVollkaskoCount := models.VollkaskoCount{}
 	seatsCount := models.SeatsCount{}
 
-	pricesRange := models.BucketizeOffersByPrice(required_ofs.
-		FilterByMinSeats(minNumberSeats).
-		FilterByCarType(carType).
-		FilterByVollkasko(onlyVollkasko).
-		FilterByMinFreeKm(minFreeKilometer).Offers, priceRangeWidth)
-	freeKilometerRange := models.BucketizeOffersByKilometer(required_ofs.
-		FilterByMinSeats(minNumberSeats).
-		FilterByPrice(minPrice, maxPrice).
-		FilterByCarType(carType).
-		FilterByVollkasko(onlyVollkasko).Offers, minFreeKilometerWidth)
+	pricesRange := models.BucketizeOffersByPrice(aggs.PricesAgg.Offers, priceRangeWidth)
+	freeKilometerRange := models.BucketizeOffersByKilometer(aggs.FreeKmAgg.Offers, minFreeKilometerWidth)
 
-	for _, offer := range required_ofs.
-		FilterByMinSeats(minNumberSeats).
-		FilterByPrice(minPrice, maxPrice).
-		FilterByVollkasko(onlyVollkasko).
-		FilterByMinFreeKm(minFreeKilometer).Offers {
+	for _, offer := range aggs.CarTypeAgg.Offers {
 		carTypeCount.Add(offer.CarType)
 	}
 
-	for _, offer := range required_ofs.
-		FilterByMinSeats(minNumberSeats).
-		FilterByPrice(minPrice, maxPrice).
-		FilterByCarType(carType).
-		FilterByMinFreeKm(minFreeKilometer).Offers {
+	for _, offer := range aggs.VollKaskoAgg.Offers {
 		onlyVollkaskoCount.Add(offer.HasVollkasko)
 	}
 
-	for _, offer := range required_ofs.
-		FilterByPrice(minPrice, maxPrice).
-		FilterByCarType(carType).
-		FilterByVollkasko(onlyVollkasko).
-		FilterByMinFreeKm(minFreeKilometer).Offers {
+	for _, offer := range aggs.SeatsAgg.Offers {
 		seatsCount.Add(offer.NumberSeats)
 	}
 
