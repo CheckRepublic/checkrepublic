@@ -5,23 +5,29 @@ import (
 	"context"
 	"log/slog"
 	"sort"
+	"sync"
 )
 
 type MemoryDB struct {
 	db []*models.Offer
 	// takes a inner node region and returns all leaf offers in leaf regions
 	regionIdToOffers map[int32][]*models.Offer
+	rwlock           *sync.RWMutex
 }
 
 func InitMemoryDB() {
 	DB = MemoryDB{
 		db:               []*models.Offer{},
 		regionIdToOffers: make(map[int32][]*models.Offer),
+		rwlock:           &sync.RWMutex{},
 	}
 	slog.Info("Database created")
 }
 
 func (m *MemoryDB) CreateOffers(ctx context.Context, offers ...*models.Offer) error {
+	m.rwlock.Lock()
+	defer m.rwlock.Unlock()
+
 	for _, offer := range offers {
 		m.db = append(m.db, offer)
 		for _, anchecstor := range models.SpecificRegionToAnchestor[int32(offer.MostSpecificRegionID)] {
@@ -38,7 +44,7 @@ func (m *MemoryDB) GetAllOffers(ctx context.Context) models.Offers {
 
 func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeRangeStart uint64, timeRangeEnd uint64, numberDays uint64, sortOrder string, page uint64, pageSize uint64, priceRangeWidth uint32, minFreeKilometerWidth uint32, minNumberSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) models.DTO {
 	ofs := &models.Offers{Offers: m.regionIdToOffers[int32(regionID)]}
-	required_ofs := ofs.FilterMandatory(regionID, timeRangeStart, timeRangeEnd, numberDays)
+	required_ofs := ofs.FilterMandatory(timeRangeStart, timeRangeEnd, numberDays)
 
 	// Optional filters
 	optional_ofs := required_ofs.
