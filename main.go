@@ -72,6 +72,7 @@ func debugHelper(c *gin.Context) {
 		filename = time.Now().String()
 	}
 }
+
 // writeGet appends the query parameters to a file
 func writeGet(queryParams map[string][]string) {
 	// Create the content to be written to the file
@@ -109,9 +110,7 @@ func getAllHandler(c *gin.Context) {
 	return
 }
 
-
 func postHandler(c *gin.Context) {
-	slog.Info("Post request received")
 	if LogToFile {
 		debugHelper(c)
 	}
@@ -124,17 +123,16 @@ func postHandler(c *gin.Context) {
 		return
 	}
 
-	err :=	db.DB.CreateOffers(c.Request.Context(), offer.Offers...)
+	err := db.DB.CreateOffers(c.Request.Context(), offer.Offers...)
 	if err != nil {
 		slog.Error("Error creating offers", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.String(http.StatusCreated, "Offer created")
+	c.String(http.StatusOK, "Offer created")
 }
 
 func getHandler(c *gin.Context) {
-	slog.Info("Get request received")
 	if LogToFile {
 		debugHelper(c)
 	}
