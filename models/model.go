@@ -44,12 +44,12 @@ type Offer struct {
 
 func (offers *Offers) FilterMandatory(start uint64, end uint64, num uint64) (ret *Offers) {
 	ret = &Offers{}
-
+	n := num * msFactor
 	for _, offer := range offers.Offers {
-		// Check start and end date
-		if offer.StartDate >= start && offer.EndDate <= end {
-			// Check number of days
-			if offer.EndDate-offer.StartDate == num*msFactor {
+		// Check number of days
+		if offer.EndDate-offer.StartDate == n {
+			// Check start and end date
+			if offer.StartDate >= start && offer.EndDate <= end {
 				ret.Offers = append(ret.Offers, offer)
 			}
 		}
