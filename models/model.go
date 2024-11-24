@@ -87,7 +87,7 @@ func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, max
 		// For prices aggregation
 		if (numSeats == nil || offer.NumberSeats >= *numSeats) &&
 			(carType == nil || offer.CarType == *carType) &&
-			(onlyVollkasko == nil || offer.HasVollkasko == *onlyVollkasko) &&
+			(onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
 			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) {
 			ret.PricesAgg.Offers = append(ret.PricesAgg.Offers, offer)
 		}
@@ -95,7 +95,7 @@ func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, max
 		// For free km aggregation
 		if (numSeats == nil || offer.NumberSeats >= *numSeats) &&
 			(carType == nil || offer.CarType == *carType) &&
-			(onlyVollkasko == nil || offer.HasVollkasko == *onlyVollkasko) &&
+			(onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
 			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
 			ret.FreeKmAgg.Offers = append(ret.FreeKmAgg.Offers, offer)
 		}
@@ -103,7 +103,7 @@ func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, max
 		// For car type aggregation
 		if (numSeats == nil || offer.NumberSeats >= *numSeats) &&
 			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) &&
-			(onlyVollkasko == nil || offer.HasVollkasko == *onlyVollkasko) &&
+			(onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
 			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
 			ret.CarTypeAgg.Offers = append(ret.CarTypeAgg.Offers, offer)
 		}
@@ -117,7 +117,7 @@ func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, max
 		}
 
 		// For seats aggregation
-		if (onlyVollkasko == nil || offer.HasVollkasko == *onlyVollkasko) &&
+		if (onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
 			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) &&
 			(carType == nil || offer.CarType == *carType) &&
 			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
@@ -126,7 +126,7 @@ func (offers *Offers) FilterAggregations(numSeats *uint64, minPrice *uint64, max
 
 		// For optional aggregation
 		if (numSeats == nil || offer.NumberSeats >= *numSeats) &&
-			(onlyVollkasko == nil || offer.HasVollkasko == *onlyVollkasko) &&
+			(onlyVollkasko == nil || *onlyVollkasko == false || offer.HasVollkasko == *onlyVollkasko) &&
 			(minFreeKilometer == nil || offer.FreeKilometers >= *minFreeKilometer) &&
 			(carType == nil || offer.CarType == *carType) &&
 			((minPrice == nil && maxPrice == nil) || (minPrice == nil || offer.Price >= *minPrice) && (maxPrice == nil || offer.Price < *maxPrice)) {
