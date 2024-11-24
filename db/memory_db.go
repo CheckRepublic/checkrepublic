@@ -43,6 +43,9 @@ func (m *MemoryDB) GetAllOffers(ctx context.Context) models.Offers {
 }
 
 func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeRangeStart uint64, timeRangeEnd uint64, numberDays uint64, sortOrder string, page uint64, pageSize uint64, priceRangeWidth uint32, minFreeKilometerWidth uint32, minNumberSeats *uint64, minPrice *uint64, maxPrice *uint64, carType *string, onlyVollkasko *bool, minFreeKilometer *uint64) models.DTO {
+	m.rwlock.RLock()
+	defer m.rwlock.RUnlock()
+
 	ofs := &models.Offers{Offers: m.regionIdToOffers[int32(regionID)]}
 	required_ofs := ofs.FilterMandatory(timeRangeStart, timeRangeEnd, numberDays)
 
@@ -51,24 +54,8 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 
 	optional_ofs := aggs.OptionalAgg
 
-	carTypeCount := models.CarTypeCount{}
-	onlyVollkaskoCount := models.VollkaskoCount{}
-	seatsCount := models.SeatsCount{}
-
 	pricesRange := models.BucketizeOffersByPrice(aggs.PricesAgg.Offers, priceRangeWidth)
 	freeKilometerRange := models.BucketizeOffersByKilometer(aggs.FreeKmAgg.Offers, minFreeKilometerWidth)
-
-	for _, offer := range aggs.CarTypeAgg.Offers {
-		carTypeCount.Add(offer.CarType)
-	}
-
-	for _, offer := range aggs.VollKaskoAgg.Offers {
-		onlyVollkaskoCount.Add(offer.HasVollkasko)
-	}
-
-	for _, offer := range aggs.SeatsAgg.Offers {
-		seatsCount.Add(offer.NumberSeats)
-	}
 
 	// Sorting
 	if sortOrder == "price-asc" {
@@ -92,7 +79,7 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 	// Slice the offers list for pagination
 	paginatedOffers := optional_ofs.Offers[startIndex:endIndex]
 
-	var dto_offers []*models.OfferDTO
+	var dto_offers = make([]*models.OfferDTO, 0, len(paginatedOffers))
 	for _, offer := range paginatedOffers {
 		dto_offers = append(dto_offers, &models.OfferDTO{
 			ID:   offer.ID.String(),
@@ -100,22 +87,16 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 		})
 	}
 
+	seatsCountSlice := []*models.KVSeatsCount{}
 	// Transform the data correctly
-	seatsCountSlice := []struct {
-		NumberSeats uint64 `json:"numberSeats"`
-		Count       uint64 `json:"count"`
-	}{}
-	for k, v := range seatsCount {
-		seatsCountSlice = append(seatsCountSlice, struct {
-			NumberSeats uint64 `json:"numberSeats"`
-			Count       uint64 `json:"count"`
-		}{NumberSeats: k, Count: v})
+	for _, v := range aggs.SeatsCount {
+		seatsCountSlice = append(seatsCountSlice, v)
 	}
 	sort.Slice(seatsCountSlice, func(i, j int) bool {
 		return seatsCountSlice[i].NumberSeats < seatsCountSlice[j].NumberSeats
 	})
 
-	transformedPricesRange := []models.HistogramRange{}
+	transformedPricesRange := make([]models.HistogramRange, 0, len(pricesRange))
 	for _, offer := range pricesRange {
 		transformedPricesRange = append(transformedPricesRange, models.HistogramRange{
 			Start: offer.Start,
@@ -124,7 +105,7 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 		})
 	}
 
-	transformedKmRange := []models.HistogramRange{}
+	transformedKmRange := make([]models.HistogramRange, 0, len(freeKilometerRange))
 	for _, offer := range freeKilometerRange {
 		transformedKmRange = append(transformedKmRange, models.HistogramRange{
 			Start: offer.Start,
@@ -135,8 +116,8 @@ func (m *MemoryDB) GetFilteredOffers(ctx context.Context, regionID uint64, timeR
 
 	return models.DTO{
 		Offers:             dto_offers,
-		CarTypeCounts:      carTypeCount,
-		VollkaskoCount:     onlyVollkaskoCount,
+		CarTypeCounts:      aggs.CarTypeCount,
+		VollkaskoCount:     aggs.VollKaskoCount,
 		SeatsCount:         seatsCountSlice,
 		PriceRanges:        transformedPricesRange,
 		FreeKilometerRange: transformedKmRange,
