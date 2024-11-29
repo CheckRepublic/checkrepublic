@@ -7,12 +7,10 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	// "strconv"
 	"time"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-
 )
 
 var filename = time.Now().String()
@@ -157,7 +155,6 @@ func getHandler(c *gin.Context) {
 	// 	onlyVollkasko,
 	// 	minFreeKilometer)
 	offers := make([]models.Offers, 0)
-
 	c.JSON(http.StatusOK, offers)
 }
 
