@@ -56,6 +56,8 @@ func (m *MemoryDB) CreateOffers(ctx context.Context, offers ...*models.Offer) er
 		// TODO fill bitmaps with data
 		if offer.HasVollkasko {
 			m.vollcascoBitmask.Set(m.tail, true)
+		} else {
+			m.vollcascoBitmask.Set(m.tail, false)
 		}
 
 		// loop over the regionIdToOffers map
@@ -76,21 +78,36 @@ func (m *MemoryDB) CreateOffers(ctx context.Context, offers ...*models.Offer) er
 			}
 		}
 
-		if mask, ok := m.numberOfSeatsBitmask[int(offer.NumberSeats)]; ok {
-			mask.Set(m.tail, true)
-		} else {
+		found := false
+		for numSeats, mask := range m.numberOfSeatsBitmask {
+			if int(offer.NumberSeats) == numSeats {
+				mask.Set(m.tail, true)
+				found = true
+			} else {
+				mask.Set(m.tail, false)
+			}
+		}
+		if !found {
 			mask := models.BitMask{}
 			mask.Set(m.tail, true)
 			m.numberOfSeatsBitmask[int(offer.NumberSeats)] = &mask
 		}
 
-		if mask, ok := m.numberOfDaysBitmask[int(offer.NumberDays)]; ok {
-			mask.Set(m.tail, true)
-		} else {
+		found = false
+		for numDays, mask := range m.numberOfDaysBitmask {
+			if int(offer.NumberDays) == numDays {
+				mask.Set(m.tail, true)
+				found = true
+			} else {
+				mask.Set(m.tail, false)
+			}
+		}
+		if !found {
 			mask := models.BitMask{}
 			mask.Set(m.tail, true)
 			m.numberOfDaysBitmask[int(offer.NumberDays)] = &mask
 		}
+
 		m.offers = append(m.offers, offer)
 		m.tail++
 	}
