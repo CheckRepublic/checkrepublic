@@ -17,19 +17,29 @@ type MemoryDB struct {
 	numberOfDaysBitmask  map[int]*models.BitMask
 	numberOfSeatsBitmask map[int]*models.BitMask
 	carTypeBitmask       map[string]*models.BitMask
+
+	regionIdToOffers map[int32]*models.BitMask
 }
 
 // MARK: InitMemoryDB
 func InitMemoryDB() {
 	DB = MemoryDB{
-		offers:               make([]*models.Offer, 0, 10_000),
-		tail:                 0,
-		rwlock:               &sync.RWMutex{},
+		offers: make([]*models.Offer, 0, 10_000),
+		tail:   0,
+		rwlock: &sync.RWMutex{},
+
 		vollcascoBitmask:     models.BitMask{},
 		numberOfDaysBitmask:  make(map[int]*models.BitMask),
 		numberOfSeatsBitmask: make(map[int]*models.BitMask),
 		carTypeBitmask:       make(map[string]*models.BitMask),
+
+		regionIdToOffers: make(map[int32]*models.BitMask),
 	}
+
+	for _, leaf := range models.RegionTree.GetLeafIds() {
+		DB.regionIdToOffers[int32(leaf)] = &models.BitMask{}
+	}
+
 	slog.Info("Database created")
 }
 
@@ -41,30 +51,39 @@ func (m *MemoryDB) CreateOffers(ctx context.Context, offers ...*models.Offer) er
 	for _, offer := range offers {
 		// TODO fill bitmaps with data
 		if offer.HasVollkasko {
-			m.vollcascoBitmask.Set(m.tail)
+			m.vollcascoBitmask.Set(m.tail, true)
+		}
+
+		// loop over the regionIdToOffers map
+		for regionId, mask := range m.regionIdToOffers {
+			if offer.MostSpecificRegionID == uint64(regionId) {
+				mask.Set(m.tail, true)
+			} else {
+				mask.Set(m.tail, false)
+			}
 		}
 
 		// Ensure the bitmasks are initialized
 		if mask, ok := m.carTypeBitmask[offer.CarType]; ok {
-			mask.Set(m.tail)
+			mask.Set(m.tail, true)
 		} else {
 			mask := models.BitMask{}
-			mask.Set(m.tail)
+			mask.Set(m.tail, true)
 			m.carTypeBitmask[offer.CarType] = &mask
 		}
 		if mask, ok := m.numberOfSeatsBitmask[int(offer.NumberSeats)]; ok {
-			mask.Set(m.tail)
+			mask.Set(m.tail, true)
 		} else {
 			mask := models.BitMask{}
-			mask.Set(m.tail)
+			mask.Set(m.tail, true)
 			m.numberOfSeatsBitmask[int(offer.NumberSeats)] = &mask
 		}
 
 		if mask, ok := m.numberOfDaysBitmask[int(offer.NumberDays)]; ok {
-			mask.Set(m.tail)
+			mask.Set(m.tail, true)
 		} else {
 			mask := models.BitMask{}
-			mask.Set(m.tail)
+			mask.Set(m.tail, true)
 			m.numberOfDaysBitmask[int(offer.NumberDays)] = &mask
 		}
 		m.offers = append(m.offers, offer)
@@ -80,6 +99,10 @@ func (m *MemoryDB) CreateOffers(ctx context.Context, offers ...*models.Offer) er
 	for k, v := range m.carTypeBitmask {
 		slog.Info("Car type", "type", k)
 		v.Print()
+	}
+	for region, mask := range m.regionIdToOffers {
+		slog.Info("Region", "region", region)
+		mask.Print()
 	}
 
 	return nil

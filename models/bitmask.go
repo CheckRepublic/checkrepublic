@@ -19,10 +19,14 @@ func (b *BitMask) EnsureCapacity(bitIndex uint) {
 }
 
 // Set sets the bit at the given index
-func (b *BitMask) Set(index uint) {
-	slog.Info("Setting bit at index %d", "index", index)
-	b.EnsureCapacity(index)
-	(*b)[index/64] |= 1 << (index % 64)
+func (b *BitMask) Set(index uint, value bool) {
+    slog.Info("Setting bit at index %d to %t", "index", index, "value", value)
+    b.EnsureCapacity(index)
+    if value {
+        (*b)[index/64] |= 1 << (index % 64)  // Set bit to 1
+    } else {
+        (*b)[index/64] &^= 1 << (index % 64) // Set bit to 0
+    }
 }
 
 // Clear clears the bit at the given index

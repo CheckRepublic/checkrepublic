@@ -14,31 +14,43 @@ type Region struct {
 	SubRegions []Region `json:"subRegions"`
 }
 
-var SpecificRegionToAnchestor map[int32][]int32
+var RegionTree Region
+var mapRegion map[int32]*Region
 
 func InitRegions() {
-	var region Region
-	if err := json.Unmarshal([]byte(jsonRegion), &region); err != nil {
+	if err := json.Unmarshal([]byte(jsonRegion), &RegionTree); err != nil {
 		log.Fatalf("failed to unmarshal JSON: %v", err)
 	}
 
-	SpecificRegionToAnchestor = make(map[int32][]int32)
-	region.ToAncestorMap(SpecificRegionToAnchestor, []int32{})
+  mapRegion = make(map[int32]*Region)
+  RegionTree.Walk(func(region *Region) {
+    mapRegion[region.Id] = region
+  })
+
+	// log.Printf("RegionTree: %v", RegionTree)
 }
 
-func (region *Region) ToAncestorMap(ancestorMap map[int32][]int32, ancestors []int32) {
-	currentAncestors := append([]int32{}, ancestors...) // Copy the current ancestors
-	currentAncestors = append(currentAncestors, region.Id)
+func (region *Region) Walk(fn func(region *Region)) {
+  fn(region)
+  for _, subRegion := range region.SubRegions {
+    subRegion.Walk(fn)
+  }
+}
 
+func (region *Region) GetRegionById(id int32) *Region {
+  return mapRegion[id]
+}
+
+func (region *Region) GetLeafIds() []int32 {
+	var leafs []int32
 	if len(region.SubRegions) == 0 {
-		// It's a leaf node
-		ancestorMap[region.Id] = currentAncestors
+		leafs = append(leafs, region.Id)
 	} else {
-		// It's an inner node
 		for _, subRegion := range region.SubRegions {
-			subRegion.ToAncestorMap(ancestorMap, currentAncestors)
+			leafs = append(leafs, subRegion.GetLeafIds()...)
 		}
 	}
+	return leafs
 }
 
 const jsonRegion = `{
