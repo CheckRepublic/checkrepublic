@@ -36,6 +36,10 @@ func InitMemoryDB() {
 		regionIdToOffers: make(map[int32]*models.BitMask),
 	}
 
+	for _, carType := range []string{"small", "sports", "luxury", "family"} {
+		DB.carTypeBitmask[carType] = &models.BitMask{}
+	}
+
 	for _, leaf := range models.RegionTree.GetLeafIds() {
 		DB.regionIdToOffers[int32(leaf)] = &models.BitMask{}
 	}
@@ -64,13 +68,14 @@ func (m *MemoryDB) CreateOffers(ctx context.Context, offers ...*models.Offer) er
 		}
 
 		// Ensure the bitmasks are initialized
-		if mask, ok := m.carTypeBitmask[offer.CarType]; ok {
-			mask.Set(m.tail, true)
-		} else {
-			mask := models.BitMask{}
-			mask.Set(m.tail, true)
-			m.carTypeBitmask[offer.CarType] = &mask
+		for carType, mask := range m.carTypeBitmask {
+			if carType == offer.CarType {
+				mask.Set(m.tail, true)
+			} else {
+				mask.Set(m.tail, false)
+			}
 		}
+
 		if mask, ok := m.numberOfSeatsBitmask[int(offer.NumberSeats)]; ok {
 			mask.Set(m.tail, true)
 		} else {
