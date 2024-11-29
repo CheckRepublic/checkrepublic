@@ -194,5 +194,10 @@ func (m *MemoryDB) DeleteAllOffers(ctx context.Context) error {
 	m.offers = make([]*models.Offer, 0, 10_000)
 	m.tail = 0
 
+	m.vollcascoBitmask = models.BitMask{}
+	m.numberOfDaysBitmask = make(map[int]*models.BitMask)
+	m.numberOfSeatsBitmask = make(map[int]*models.BitMask)
+	m.carTypeBitmask = make(map[string]*models.BitMask)
+
 	return nil
 }
